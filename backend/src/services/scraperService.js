@@ -1,5 +1,5 @@
 import axios from 'axios';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import { env } from '../config/env.js';
 import { Shop } from '../models/Shop.js';
