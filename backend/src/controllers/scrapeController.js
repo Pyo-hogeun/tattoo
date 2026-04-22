@@ -5,7 +5,7 @@ import { scrapeSource } from '../services/scraperService.js';
 export const runScraping = async (req, res, next) => {
   try {
     const { sourceId } = req.body;
-    const query = sourceId ? { _id: sourceId } : { enabled: true };
+    const query = sourceId ? { _id: sourceId } : {};
     const sources = await ScrapeSource.find(query);
 
     if (!sources.length) {
@@ -15,7 +15,7 @@ export const runScraping = async (req, res, next) => {
 
       return res.json({
         results: [],
-        message: 'No enabled scraping sources found'
+        message: 'No scraping sources found. Please register a source first.'
       });
     }
 
