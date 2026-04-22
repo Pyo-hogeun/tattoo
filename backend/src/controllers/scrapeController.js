@@ -5,6 +5,8 @@ import { scrapeSource } from '../services/scraperService.js';
 export const runScraping = async (req, res, next) => {
   try {
     const { sourceId } = req.body;
+    // 참고: `enabled: true`는 "자동(크론) 수집 대상"으로 켜둔 소스만 의미합니다.
+    // 수동 전체 실행은 운영자가 의도적으로 누르는 액션이므로 enabled 여부와 무관하게 전체 소스를 대상으로 합니다.
     const query = sourceId ? { _id: sourceId } : {};
     const sources = await ScrapeSource.find(query);
 
