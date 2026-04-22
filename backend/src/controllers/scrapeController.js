@@ -9,7 +9,14 @@ export const runScraping = async (req, res, next) => {
     const sources = await ScrapeSource.find(query);
 
     if (!sources.length) {
-      return res.status(404).json({ message: 'No scraping source found' });
+      if (sourceId) {
+        return res.status(404).json({ message: 'No scraping source found' });
+      }
+
+      return res.json({
+        results: [],
+        message: 'No enabled scraping sources found'
+      });
     }
 
     const results = [];
