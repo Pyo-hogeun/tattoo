@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue';
+import { computed, reactive, ref, onMounted } from 'vue';
 import { useBackofficeStore } from '~/stores/backoffice';
 
 const store = useBackofficeStore();
@@ -7,6 +7,8 @@ const search = ref('');
 
 const sourceForm = reactive({
   name: '',
+  type: 'custom' as 'custom' | 'naver-map' | 'naver-blog',
+  query: '',
   url: '',
   item: '.shop-item',
   nameSelector: '.name',
@@ -16,23 +18,32 @@ const sourceForm = reactive({
   descriptionSelector: '.description'
 });
 
+const isCustom = computed(() => sourceForm.type === 'custom');
+
 const createSource = async () => {
   await store.addSource({
     name: sourceForm.name,
-    url: sourceForm.url,
-    selectors: {
-      item: sourceForm.item,
-      name: sourceForm.nameSelector,
-      address: sourceForm.addressSelector,
-      phone: sourceForm.phoneSelector,
-      city: sourceForm.citySelector,
-      description: sourceForm.descriptionSelector
-    },
+    type: sourceForm.type,
+    query: sourceForm.query || undefined,
+    url: sourceForm.url || undefined,
+    selectors:
+      sourceForm.type === 'custom'
+        ? {
+            item: sourceForm.item,
+            name: sourceForm.nameSelector,
+            address: sourceForm.addressSelector,
+            phone: sourceForm.phoneSelector,
+            city: sourceForm.citySelector,
+            description: sourceForm.descriptionSelector
+          }
+        : undefined,
     enabled: true
   });
 
   Object.assign(sourceForm, {
     name: '',
+    type: 'custom',
+    query: '',
     url: '',
     item: '.shop-item',
     nameSelector: '.name',
@@ -72,13 +83,33 @@ onMounted(async () => {
         <h2 class="mb-3 text-lg font-semibold">스크래핑 소스 등록</h2>
         <form class="grid gap-2" @submit.prevent="createSource">
           <input v-model="sourceForm.name" class="rounded border p-2" placeholder="소스 이름" required />
-          <input v-model="sourceForm.url" class="rounded border p-2" placeholder="https://example.com/list" required />
-          <input v-model="sourceForm.item" class="rounded border p-2" placeholder="item selector" required />
-          <input v-model="sourceForm.nameSelector" class="rounded border p-2" placeholder="name selector" required />
-          <input v-model="sourceForm.addressSelector" class="rounded border p-2" placeholder="address selector" />
-          <input v-model="sourceForm.phoneSelector" class="rounded border p-2" placeholder="phone selector" />
-          <input v-model="sourceForm.citySelector" class="rounded border p-2" placeholder="city selector" />
-          <input v-model="sourceForm.descriptionSelector" class="rounded border p-2" placeholder="description selector" />
+          <select v-model="sourceForm.type" class="rounded border p-2">
+            <option value="custom">커스텀 HTML</option>
+            <option value="naver-map">네이버 지도 검색</option>
+            <option value="naver-blog">네이버 블로그</option>
+          </select>
+          <input
+            v-if="!isCustom"
+            v-model="sourceForm.query"
+            class="rounded border p-2"
+            placeholder="검색어 (예: 강남 눈썹문신)"
+            required
+          />
+          <input
+            v-model="sourceForm.url"
+            class="rounded border p-2"
+            :placeholder="isCustom ? 'https://example.com/list' : '선택: 직접 URL 입력'"
+            :required="isCustom"
+          />
+
+          <template v-if="isCustom">
+            <input v-model="sourceForm.item" class="rounded border p-2" placeholder="item selector" required />
+            <input v-model="sourceForm.nameSelector" class="rounded border p-2" placeholder="name selector" required />
+            <input v-model="sourceForm.addressSelector" class="rounded border p-2" placeholder="address selector" />
+            <input v-model="sourceForm.phoneSelector" class="rounded border p-2" placeholder="phone selector" />
+            <input v-model="sourceForm.citySelector" class="rounded border p-2" placeholder="city selector" />
+            <input v-model="sourceForm.descriptionSelector" class="rounded border p-2" placeholder="description selector" />
+          </template>
           <button class="rounded bg-slate-900 px-4 py-2 text-white">소스 저장</button>
         </form>
       </div>
@@ -88,8 +119,8 @@ onMounted(async () => {
         <div class="space-y-2">
           <div v-for="source in store.sources" :key="source._id" class="flex items-center justify-between rounded border p-2">
             <div>
-              <p class="font-medium">{{ source.name }}</p>
-              <p class="text-xs text-slate-500">{{ source.url }}</p>
+              <p class="font-medium">{{ source.name }} ({{ source.type }})</p>
+              <p class="text-xs text-slate-500">{{ source.url || source.query }}</p>
             </div>
             <button class="rounded border px-3 py-1 text-sm" @click="store.runScraping(source._id)">실행</button>
           </div>

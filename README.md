@@ -1,6 +1,6 @@
 # 눈썹문신 매장 데이터 수집 백오피스
 
-눈썹문신 샵/매장 정보를 자동 스크래핑하고, MongoDB에 저장/관리하는 백오피스 프로젝트입니다.
+눈썹문신 샵/매장 정보를 자동 수집하고, MongoDB에 저장/관리하는 백오피스 프로젝트입니다.
 
 ## 기술스택
 - Frontend: Nuxt 3 (Vue 3), Pinia, TailwindCSS
@@ -13,9 +13,16 @@
 ├── backend
 │   ├── src
 │   │   ├── controllers
+│   │   ├── crawlers
+│   │   │   ├── naverMapCrawler.js
+│   │   │   └── naverBlogCrawler.js
 │   │   ├── models
 │   │   ├── routes
 │   │   ├── services
+│   │   │   ├── pipeline
+│   │   │   │   ├── dedupeKey.js
+│   │   │   │   └── normalizeShop.js
+│   │   │   └── scraperService.js
 │   │   └── server.js
 │   └── package.json
 └── frontend
@@ -28,7 +35,6 @@
 ## 1) Backend 실행
 ```bash
 cd backend
-cp .env.example .env
 npm install
 npm run dev
 ```
@@ -45,23 +51,19 @@ npm run dev
 - `POST /api/scrape/run` 스크래핑 실행 (전체 또는 sourceId 지정)
 - `GET /api/scrape/runs` 최근 실행 이력
 
-## 2) Frontend 실행
-```bash
-cd frontend
-npm install
-NUXT_PUBLIC_API_BASE=http://localhost:4000/api npm run dev
-```
+## 2) 수집 소스 타입
+- `custom`: URL + CSS selector 기반 범용 HTML 크롤링
+- `naver-map`: 네이버 검색 기반 지도/플레이스 후보 수집
+- `naver-blog`: 네이버 블로그 페이지 본문 기반 매장 정보 추출
 
-## 스크래핑 동작 방식
-1. 백오피스에서 `스크래핑 소스`를 등록 (url + CSS selector)
-2. 수동 실행 또는 cron 스케줄에 따라 페이지를 수집
-3. 파싱된 매장을 `name/address/phone` 기반 externalId로 정규화하여 upsert
-4. 실행 결과를 `ScrapeRun`에 저장
+> 실서비스 적용 시 robots.txt, 이용약관, API 정책 준수 여부를 반드시 확인하세요.
+
+## 3) 데이터 파이프라인
+1. 소스별 crawler에서 raw item 수집
+2. `normalizeShop`에서 이름/주소/전화번호 정제
+3. `buildExternalId`/dedupe 후보 생성
+4. `Shop` upsert + `ScrapeRun` 이력 저장
 
 ## 자동 수집 스케줄
-- 기본 cron: `*/30 * * * *` (30분마다)
+- 기본 cron: `0 */6 * * *` (6시간마다)
 - `.env`의 `SCRAPE_CRON`으로 조정 가능
-
-## 참고
-- 사이트별 robots.txt/이용약관/법적 이슈를 확인 후 수집하세요.
-- 동적 렌더링(JS 실행 필요) 사이트는 Playwright/Puppeteer 기반 수집기로 확장 가능합니다.

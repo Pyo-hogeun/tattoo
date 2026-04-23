@@ -1,9 +1,12 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import crypto from 'crypto';
 import { env } from '../config/env.js';
+import { crawlNaverBlog } from '../crawlers/naverBlogCrawler.js';
+import { crawlNaverMap } from '../crawlers/naverMapCrawler.js';
 import { Shop } from '../models/Shop.js';
 import { ScrapeRun } from '../models/ScrapeRun.js';
+import { buildDedupeCandidates, buildExternalId } from './pipeline/dedupeKey.js';
+import { normalizeShop } from './pipeline/normalizeShop.js';
 
 const pickText = ($item, selector) => {
   if (!selector) return undefined;
@@ -17,43 +20,18 @@ const pickLink = ($item, selector) => {
   return value?.trim() || undefined;
 };
 
-const buildExternalId = (data) => {
-  if (data.externalId) return data.externalId;
-  const fallback = `${data.name || ''}|${data.address || ''}|${data.phone || ''}`;
-  return crypto.createHash('md5').update(fallback).digest('hex');
-};
+const crawlCustomSource = async (source) => {
+  const response = await axios.get(source.url, { timeout: env.scrapeTimeoutMs });
+  const $ = cheerio.load(response.data);
+  const items = $(source.selectors.item).toArray();
 
-const upsertShop = async (shopData) => {
-  const query = shopData.externalId
-    ? { externalId: shopData.externalId }
-    : { name: shopData.name, address: shopData.address || '' };
-
-  const existing = await Shop.findOne(query);
-  if (!existing) {
-    await Shop.create(shopData);
-    return 'inserted';
-  }
-
-  existing.set(shopData);
-  await existing.save();
-  return 'updated';
-};
-
-export const scrapeSource = async (source, mode = 'manual') => {
-  const startedAt = Date.now();
-  const stats = { inserted: 0, updated: 0, totalParsed: 0 };
-
-  try {
-    const response = await axios.get(source.url, { timeout: env.scrapeTimeoutMs });
-    const $ = cheerio.load(response.data);
-    const items = $(source.selectors.item).toArray();
-
-    for (const element of items) {
+  return items
+    .map((element) => {
       const $item = $(element);
       const name = pickText($item, source.selectors.name);
-      if (!name) continue;
+      if (!name) return null;
 
-      const payload = {
+      return {
         name,
         address: pickText($item, source.selectors.address),
         city: pickText($item, source.selectors.city),
@@ -69,9 +47,61 @@ export const scrapeSource = async (source, mode = 'manual') => {
         },
         lastScrapedAt: new Date()
       };
+    })
+    .filter(Boolean);
+};
 
-      payload.externalId = buildExternalId(payload);
-      const result = await upsertShop(payload);
+const crawlBySourceType = async (source) => {
+  if (source.type === 'naver-map') {
+    return crawlNaverMap(source);
+  }
+
+  if (source.type === 'naver-blog') {
+    return crawlNaverBlog(source);
+  }
+
+  return crawlCustomSource(source);
+};
+
+const upsertShop = async (shopData) => {
+  const dedupeCandidates = buildDedupeCandidates(shopData);
+
+  let existing = null;
+  for (const query of dedupeCandidates) {
+    existing = await Shop.findOne(query);
+    if (existing) break;
+  }
+
+  if (!existing) {
+    await Shop.create(shopData);
+    return 'inserted';
+  }
+
+  existing.set(shopData);
+  await existing.save();
+  return 'updated';
+};
+
+export const scrapeSource = async (source, mode = 'manual') => {
+  const startedAt = Date.now();
+  const stats = { inserted: 0, updated: 0, totalParsed: 0 };
+
+  try {
+    const rawShops = await crawlBySourceType(source);
+
+    for (const item of rawShops) {
+      const normalized = normalizeShop({
+        ...item,
+        sourceName: source.name,
+        sourceUrl: item.sourceUrl || source.url,
+        tags: [...(source.defaultTags || []), ...(item.tags || [])],
+        lastScrapedAt: new Date()
+      });
+
+      if (!normalized.name) continue;
+      normalized.externalId = buildExternalId(normalized);
+
+      const result = await upsertShop(normalized);
       stats[result] += 1;
       stats.totalParsed += 1;
     }

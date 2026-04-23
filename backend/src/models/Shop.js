@@ -5,7 +5,7 @@ const ShopSchema = new mongoose.Schema(
     name: { type: String, required: true, index: true },
     address: { type: String, index: true },
     city: { type: String, index: true },
-    phone: String,
+    phone: { type: String, index: true },
     description: String,
     sourceName: { type: String, index: true },
     sourceUrl: String,
@@ -19,5 +19,7 @@ const ShopSchema = new mongoose.Schema(
 );
 
 ShopSchema.index({ name: 1, address: 1 }, { unique: true });
+ShopSchema.index({ externalId: 1 }, { unique: true, sparse: true });
+ShopSchema.index({ name: 1, phone: 1 });
 
 export const Shop = mongoose.model('Shop', ShopSchema);

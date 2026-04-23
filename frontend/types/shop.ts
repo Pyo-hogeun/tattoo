@@ -9,12 +9,16 @@ export interface Shop {
   updatedAt: string;
 }
 
+export type ScrapeSourceType = 'custom' | 'naver-map' | 'naver-blog';
+
 export interface ScrapeSource {
   _id: string;
   name: string;
-  url: string;
+  type: ScrapeSourceType;
+  query?: string;
+  url?: string;
   enabled: boolean;
-  selectors: {
+  selectors?: {
     item: string;
     name: string;
     address?: string;
