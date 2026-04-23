@@ -128,7 +128,7 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section class="rounded-xl border bg-white p-4 shadow-sm">
+    <section class="rounded-xl border bg-white p-4 shadow-sm h-[60vh] overflow-y-auto">
       <div class="mb-3 flex items-center gap-2">
         <h2 class="text-lg font-semibold">매장 목록</h2>
         <input v-model="search" class="rounded border p-1 text-sm" placeholder="검색어" />
@@ -137,6 +137,9 @@ onMounted(async () => {
 
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
+          <colgroup>
+            <col class="w-[60%]">
+          </colgroup>
           <thead class="bg-slate-100 text-left">
             <tr>
               <th class="p-2">이름</th>
@@ -161,12 +164,14 @@ onMounted(async () => {
 
     <section class="rounded-xl border bg-white p-4 shadow-sm">
       <h2 class="mb-2 text-lg font-semibold">최근 스크래핑 이력</h2>
-      <ul class="space-y-1 text-sm">
-        <li v-for="run in store.runs" :key="run._id" class="rounded border p-2">
-          <span class="font-medium">{{ run.sourceName }}</span>
-          - {{ run.status }} / parsed: {{ run.totalParsed }} / inserted: {{ run.inserted }} / updated: {{ run.updated }}
-        </li>
-      </ul>
+      <div class="h-[30vh] overflow-y-auto">
+        <ul class="space-y-1 text-sm">
+          <li v-for="run in store.runs" :key="run._id" class="rounded border p-2">
+            <span class="font-medium">{{ run.sourceName }}</span>
+            - {{ run.status }} / parsed: {{ run.totalParsed }} / inserted: {{ run.inserted }} / updated: {{ run.updated }}
+          </li>
+        </ul>
+      </div>
     </section>
   </div>
 </template>
