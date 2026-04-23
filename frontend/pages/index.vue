@@ -54,6 +54,11 @@ const createSource = async () => {
   });
 };
 
+const deleteSource = async (sourceId: string) => {
+  if (!confirm('이 소스를 삭제하시겠습니까?')) return;
+  await store.deleteSource(sourceId);
+};
+
 onMounted(async () => {
   await Promise.all([store.fetchShops(), store.fetchSources(), store.fetchRuns()]);
 });
@@ -122,7 +127,12 @@ onMounted(async () => {
               <p class="font-medium">{{ source.name }} ({{ source.type }})</p>
               <p class="text-xs text-slate-500">{{ source.url || source.query }}</p>
             </div>
-            <button class="rounded border px-3 py-1 text-sm" @click="store.runScraping(source._id)">실행</button>
+            <div class="flex items-center gap-2">
+              <button class="rounded border px-3 py-1 text-sm" @click="store.runScraping(source._id)">실행</button>
+              <button class="rounded border border-red-200 px-3 py-1 text-sm text-red-600" @click="deleteSource(source._id)">
+                삭제
+              </button>
+            </div>
           </div>
         </div>
       </div>

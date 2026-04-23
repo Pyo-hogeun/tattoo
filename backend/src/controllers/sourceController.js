@@ -30,3 +30,13 @@ export const updateSource = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deleteSource = async (req, res, next) => {
+  try {
+    const deleted = await ScrapeSource.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Source not found' });
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};

@@ -41,6 +41,10 @@ export const useBackofficeStore = defineStore('backoffice', {
       await this.api('/sources', { method: 'POST', body: payload });
       await this.fetchSources();
     },
+    async deleteSource(sourceId: string) {
+      await this.api(`/sources/${sourceId}`, { method: 'DELETE' });
+      await this.fetchSources();
+    },
     async runScraping(sourceId?: string) {
       const response: any = await this.api('/scrape/run', {
         method: 'POST',
