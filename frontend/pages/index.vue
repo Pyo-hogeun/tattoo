@@ -59,6 +59,11 @@ const deleteSource = async (sourceId: string) => {
   await store.deleteSource(sourceId);
 };
 
+const deleteShop = async (shopId: string) => {
+  if (!confirm('이 매장을 삭제하시겠습니까?')) return;
+  await store.deleteShop(shopId, search.value);
+};
+
 onMounted(async () => {
   await Promise.all([store.fetchShops(), store.fetchSources(), store.fetchRuns()]);
 });
@@ -157,6 +162,7 @@ onMounted(async () => {
               <th class="p-2">연락처</th>
               <th class="p-2">도시</th>
               <th class="p-2">수집출처</th>
+              <th class="p-2">관리</th>
             </tr>
           </thead>
           <tbody>
@@ -166,6 +172,11 @@ onMounted(async () => {
               <td class="p-2">{{ shop.phone }}</td>
               <td class="p-2">{{ shop.city }}</td>
               <td class="p-2">{{ shop.sourceName }}</td>
+              <td class="p-2">
+                <button class="rounded border border-red-200 px-2 py-1 text-xs text-red-600" @click="deleteShop(shop._id)">
+                  삭제
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
