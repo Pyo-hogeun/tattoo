@@ -73,8 +73,19 @@ const upsertShop = async (shopData) => {
   }
 
   if (!existing) {
-    await Shop.create(shopData);
-    return 'inserted';
+    try {
+      await Shop.create(shopData);
+      return 'inserted';
+    } catch (error) {
+      if (error?.code !== 11000) throw error;
+
+      for (const query of dedupeCandidates) {
+        existing = await Shop.findOne(query);
+        if (existing) break;
+      }
+
+      if (!existing) throw error;
+    }
   }
 
   existing.set(shopData);

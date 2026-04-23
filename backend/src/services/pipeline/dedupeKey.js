@@ -14,6 +14,7 @@ export const buildExternalId = (data = {}) => {
 export const buildDedupeCandidates = (data = {}) => {
   const candidates = [];
   if (data.externalId) candidates.push({ externalId: data.externalId });
+  if (data.phone) candidates.push({ phone: data.phone });
 
   if (data.name && data.address) {
     candidates.push({ name: data.name, address: data.address });
