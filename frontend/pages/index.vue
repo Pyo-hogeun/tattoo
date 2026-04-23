@@ -151,9 +151,9 @@ onMounted(async () => {
       </div>
 
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-sm store-list">
           <colgroup>
-            <col class="w-[60%]">
+            <col class="w-[40%]">
           </colgroup>
           <thead class="bg-slate-100 text-left">
             <tr>
@@ -166,7 +166,7 @@ onMounted(async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="shop in store.shops" :key="shop._id" class="border-t">
+            <tr v-for="shop in store.shops" :key="shop._id" class="border-t hover:bg-slate-100">
               <td class="p-2">{{ shop.name }}</td>
               <td class="p-2">{{ shop.address }}</td>
               <td class="p-2">{{ shop.phone }}</td>

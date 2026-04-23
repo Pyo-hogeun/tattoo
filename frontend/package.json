@@ -13,6 +13,8 @@
     "pinia": "^3.0.1"
   },
   "devDependencies": {
-    "@nuxtjs/tailwindcss": "^6.13.1"
+    "@nuxtjs/tailwindcss": "^6.13.1",
+    "sass": "^1.99.0",
+    "sass-loader": "^16.0.7"
   }
 }
