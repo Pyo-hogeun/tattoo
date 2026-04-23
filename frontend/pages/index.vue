@@ -149,6 +149,7 @@ onMounted(async () => {
         <input v-model="search" class="rounded border p-1 text-sm" placeholder="검색어" />
         <button class="rounded border px-3 py-1 text-sm" @click="store.fetchShops(search)">검색</button>
       </div>
+      <p class="mb-2 text-xs text-slate-500">수집된 DB 목록 총 {{ store.total }}건</p>
 
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
