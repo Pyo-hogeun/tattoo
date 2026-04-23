@@ -20,6 +20,7 @@ const ShopSchema = new mongoose.Schema(
 
 ShopSchema.index({ name: 1, address: 1 }, { unique: true });
 ShopSchema.index({ externalId: 1 }, { unique: true, sparse: true });
+ShopSchema.index({ phone: 1 }, { unique: true, sparse: true });
 ShopSchema.index({ name: 1, phone: 1 });
 
 export const Shop = mongoose.model('Shop', ShopSchema);
