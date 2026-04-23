@@ -7,5 +7,6 @@ export const env = {
   mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/eyebrow_backoffice',
   scrapeCron: process.env.SCRAPE_CRON || '0 */6 * * *',
   scrapeTimeoutMs: Number(process.env.SCRAPE_TIMEOUT_MS || 10000),
+  naverMapMaxPages: Number(process.env.NAVER_MAP_MAX_PAGES || 3),
   frontendOrigin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000'
 };
