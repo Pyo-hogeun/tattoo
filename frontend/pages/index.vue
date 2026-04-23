@@ -64,6 +64,11 @@ const deleteShop = async (shopId: string) => {
   await store.deleteShop(shopId, search.value);
 };
 
+const formatDateTime = (value?: string) => {
+  if (!value) return '-';
+  return new Date(value).toLocaleString('ko-KR');
+};
+
 onMounted(async () => {
   await Promise.all([store.fetchShops(), store.fetchSources(), store.fetchRuns()]);
 });
@@ -191,6 +196,7 @@ onMounted(async () => {
           <li v-for="run in store.runs" :key="run._id" class="rounded border p-2">
             <span class="font-medium">{{ run.sourceName }}</span>
             - {{ run.status }} / parsed: {{ run.totalParsed }} / inserted: {{ run.inserted }} / updated: {{ run.updated }}
+            <span class="ml-2 text-xs text-slate-500">생성일: {{ formatDateTime(run.createdAt) }}</span>
           </li>
         </ul>
       </div>
