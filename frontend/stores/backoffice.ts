@@ -1,12 +1,5 @@
 import { defineStore } from 'pinia';
-import type { ScrapeSource, Shop } from '~/types/shop';
-
-interface RunResult {
-  source: string;
-  success: boolean;
-  stats?: { inserted: number; updated: number; totalParsed: number };
-  error?: string;
-}
+import type { Shop } from '~/types/shop';
 
 export const useBackofficeStore = defineStore('backoffice', {
   state: () => ({
@@ -14,10 +7,7 @@ export const useBackofficeStore = defineStore('backoffice', {
     total: 0,
     page: 1,
     limit: 20,
-    sources: [] as ScrapeSource[],
-    runs: [] as any[],
-    loading: false,
-    lastRunResults: [] as RunResult[]
+    loading: false
   }),
   actions: {
     api(path: string, options?: any) {
@@ -44,31 +34,9 @@ export const useBackofficeStore = defineStore('backoffice', {
       await this.api(`/shops/${shopId}`, { method: 'PUT', body: payload });
       await this.fetchShops();
     },
-    async fetchSources() {
-      this.sources = (await this.api('/sources')) as ScrapeSource[];
-    },
-    async addSource(payload: Partial<ScrapeSource>) {
-      await this.api('/sources', { method: 'POST', body: payload });
-      await this.fetchSources();
-    },
-    async deleteSource(sourceId: string) {
-      await this.api(`/sources/${sourceId}`, { method: 'DELETE' });
-      await this.fetchSources();
-    },
     async deleteShop(shopId: string, search = '', district = '', town = '') {
       await this.api(`/shops/${shopId}`, { method: 'DELETE' });
       await this.fetchShops(search, district, town);
-    },
-    async runScraping(sourceId?: string) {
-      const response: any = await this.api('/scrape/run', {
-        method: 'POST',
-        body: sourceId ? { sourceId } : {}
-      });
-      this.lastRunResults = response.results;
-      await Promise.all([this.fetchShops(), this.fetchRuns(), this.fetchSources()]);
-    },
-    async fetchRuns() {
-      this.runs = (await this.api('/scrape/runs')) as any[];
     }
   }
 });

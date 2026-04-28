@@ -28,24 +28,3 @@ export interface Shop {
   isActive?: boolean;
   updatedAt: string;
 }
-
-export type ScrapeSourceType = 'custom' | 'naver-map' | 'naver-blog';
-
-export interface ScrapeSource {
-  _id: string;
-  name: string;
-  type: ScrapeSourceType;
-  query?: string;
-  url?: string;
-  enabled: boolean;
-  selectors?: {
-    item: string;
-    name: string;
-    address?: string;
-    phone?: string;
-    city?: string;
-    description?: string;
-    link?: string;
-    externalId?: string;
-  };
-}
