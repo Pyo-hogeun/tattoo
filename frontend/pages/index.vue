@@ -207,22 +207,27 @@ onMounted(async () => {
           <p v-if="phoneValidationMessage" class="mt-1 text-xs text-red-600">{{ phoneValidationMessage }}</p>
           <p v-else-if="phoneDigits.length > 0" class="mt-1 text-xs text-slate-500">입력 숫자: {{ phoneDigits }}</p>
         </div>
-        <input v-model="shopForm.cityProvince" class="rounded border bg-slate-100 p-2" readonly />
-        <select v-model="shopForm.district" class="rounded border p-2" required @change="onDistrictChange">
-          <option disabled value="">지역구 선택</option>
-          <option v-for="district in districtOptions" :key="district" :value="district">{{ district }}</option>
-        </select>
-        <select v-model="shopForm.town" class="rounded border p-2" :disabled="!shopForm.district" required>
-          <option disabled value="">행정동/읍 선택</option>
-          <option v-for="town in townOptions" :key="town" :value="town">{{ town }}</option>
-        </select>
-        <input v-model="shopForm.addressDetail" class="rounded border p-2 md:col-span-2" placeholder="상세 주소 (번지/도로명/건물명)" />
-        <input
-          :value="`${shopForm.cityProvince} ${shopForm.district} ${shopForm.town} ${shopForm.addressDetail}`.trim()"
-          class="rounded border bg-slate-100 p-2 md:col-span-2 text-sm text-slate-600"
-          readonly
-          placeholder="조합된 주소"
-        />
+        <div class="rounded-lg border border-indigo-200 bg-indigo-50/40 p-3 md:col-span-2">
+          <p class="mb-2 text-xs font-semibold text-indigo-700">주소지 입력 (행정구역 선택 + 상세주소)</p>
+          <div class="grid gap-2 md:grid-cols-3">
+            <input v-model="shopForm.cityProvince" class="rounded border bg-slate-100 p-2" readonly />
+            <select v-model="shopForm.district" class="rounded border p-2" required @change="onDistrictChange">
+              <option disabled value="">지역구 선택</option>
+              <option v-for="district in districtOptions" :key="district" :value="district">{{ district }}</option>
+            </select>
+            <select v-model="shopForm.town" class="rounded border p-2" :disabled="!shopForm.district" required>
+              <option disabled value="">행정동/읍 선택</option>
+              <option v-for="town in townOptions" :key="town" :value="town">{{ town }}</option>
+            </select>
+          </div>
+          <input v-model="shopForm.addressDetail" class="mt-2 w-full rounded border p-2" placeholder="상세 주소 (번지/도로명/건물명)" />
+          <input
+            :value="`${shopForm.cityProvince} ${shopForm.district} ${shopForm.town} ${shopForm.addressDetail}`.trim()"
+            class="mt-2 w-full rounded border bg-slate-100 p-2 text-sm text-slate-600"
+            readonly
+            placeholder="조합된 주소"
+          />
+        </div>
         <input v-model="shopForm.homepage" class="rounded border p-2" placeholder="홈페이지 URL" />
         <input v-model="shopForm.instagram" class="rounded border p-2" placeholder="인스타그램" />
         <input v-model="shopForm.kakaoChannel" class="rounded border p-2" placeholder="카카오 채널" />
