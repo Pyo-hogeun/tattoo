@@ -38,6 +38,34 @@ const sourceForm = reactive({
 
 const isCustom = computed(() => sourceForm.type === 'custom');
 const isEditing = computed(() => Boolean(editingShopId.value));
+const phoneDigits = computed(() => shopForm.phone.replace(/\D/g, ''));
+const isPhoneValid = computed(() => !shopForm.phone || /^0\d{1,2}-\d{3,4}-\d{4}$/.test(shopForm.phone));
+const phoneValidationMessage = computed(() =>
+  isPhoneValid.value ? '' : '연락처 형식이 올바르지 않습니다. 예: 010-1234-5678'
+);
+const canSubmitShop = computed(() => Boolean(shopForm.name.trim()) && isPhoneValid.value);
+
+const formatPhone = (value?: string) => {
+  if (!value) return '';
+
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+
+  if (digits.startsWith('02')) {
+    if (digits.length <= 9) return `${digits.slice(0, 2)}-${digits.slice(2, 5)}-${digits.slice(5)}`;
+    return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+};
+
+const onPhoneInput = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  shopForm.phone = formatPhone(input.value);
+};
 
 const resetShopForm = () => {
   Object.assign(shopForm, shopFormDefault);
@@ -45,6 +73,8 @@ const resetShopForm = () => {
 };
 
 const submitShop = async () => {
+  if (!canSubmitShop.value) return;
+
   const payload = {
     ...shopForm,
     dataSourceType: 'manual' as const,
@@ -66,7 +96,7 @@ const startEditShop = (shop: any) => {
     name: shop.name || '',
     address: shop.address || '',
     city: shop.city || '',
-    phone: shop.phone || '',
+    phone: formatPhone(shop.phone || ''),
     homepage: shop.homepage || '',
     instagram: shop.instagram || '',
     kakaoChannel: shop.kakaoChannel || '',
@@ -144,7 +174,18 @@ onMounted(async () => {
       <p class="mb-3 text-sm text-slate-600">크롤링 대신 운영자가 직접 매장 정보를 입력하여 DB를 관리합니다.</p>
       <form class="grid gap-2 md:grid-cols-2" @submit.prevent="submitShop">
         <input v-model="shopForm.name" class="rounded border p-2" placeholder="매장명" required />
-        <input v-model="shopForm.phone" class="rounded border p-2" placeholder="연락처" />
+        <div>
+          <input
+            :value="shopForm.phone"
+            class="w-full rounded border p-2"
+            :class="isPhoneValid ? '' : 'border-red-500'"
+            placeholder="연락처 (예: 010-1234-5678)"
+            maxlength="13"
+            @input="onPhoneInput"
+          />
+          <p v-if="phoneValidationMessage" class="mt-1 text-xs text-red-600">{{ phoneValidationMessage }}</p>
+          <p v-else-if="phoneDigits.length > 0" class="mt-1 text-xs text-slate-500">입력 숫자: {{ phoneDigits }}</p>
+        </div>
         <input v-model="shopForm.address" class="rounded border p-2 md:col-span-2" placeholder="주소" />
         <input v-model="shopForm.city" class="rounded border p-2" placeholder="도시/지역" />
         <input v-model="shopForm.homepage" class="rounded border p-2" placeholder="홈페이지 URL" />
@@ -159,7 +200,7 @@ onMounted(async () => {
           노출 상태(활성)
         </label>
         <div class="md:col-span-2">
-          <button class="rounded bg-slate-900 px-4 py-2 text-white">
+          <button class="rounded bg-slate-900 px-4 py-2 text-white disabled:cursor-not-allowed disabled:bg-slate-400" :disabled="!canSubmitShop">
             {{ isEditing ? '매장 수정 저장' : '매장 등록' }}
           </button>
         </div>
@@ -190,7 +231,7 @@ onMounted(async () => {
             <tr v-for="shop in store.shops" :key="shop._id" class="border-t hover:bg-slate-100">
               <td class="p-2">{{ shop.name }}</td>
               <td class="p-2">{{ shop.address }}</td>
-              <td class="p-2">{{ shop.phone }}</td>
+              <td class="p-2">{{ formatPhone(shop.phone) }}</td>
               <td class="p-2">{{ shop.instagram || shop.kakaoChannel || '-' }}</td>
               <td class="p-2">{{ shop.isActive ? '활성' : '비활성' }}</td>
               <td class="p-2">
