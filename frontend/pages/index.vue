@@ -249,9 +249,6 @@ onMounted(async () => {
             placeholder="조합된 주소"
           />
         </div>
-        <input v-model="shopForm.homepage" class="rounded border p-2" placeholder="홈페이지 URL" />
-        <input v-model="shopForm.instagram" class="rounded border p-2" placeholder="인스타그램" />
-        <input v-model="shopForm.kakaoChannel" class="rounded border p-2" placeholder="카카오 채널" />
         <div class="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 md:col-span-2">
           <div class="mb-2 flex items-center justify-between">
             <p class="text-xs font-semibold text-emerald-700">영업시간 입력 (10분 단위)</p>
@@ -293,6 +290,11 @@ onMounted(async () => {
           </div>
           <p class="mt-2 text-xs text-slate-600">저장 미리보기: {{ buildBusinessHoursPayload().businessHours }}</p>
         </div>
+        
+        <input v-model="shopForm.homepage" class="rounded border p-2" placeholder="홈페이지 URL" />
+        <input v-model="shopForm.instagram" class="rounded border p-2" placeholder="인스타그램" />
+        <input v-model="shopForm.kakaoChannel" class="rounded border p-2" placeholder="카카오 채널" />
+        
         <input v-model="shopForm.bookingNotes" class="rounded border p-2 md:col-span-2" placeholder="예약/상담 메모" />
         <textarea v-model="shopForm.description" class="rounded border p-2 md:col-span-2" placeholder="설명" rows="2" />
         <textarea v-model="shopForm.manualMemo" class="rounded border p-2 md:col-span-2" placeholder="운영 메모" rows="2" />
@@ -351,8 +353,8 @@ onMounted(async () => {
               <td class="p-2">{{ shop.isActive ? '활성' : '비활성' }}</td>
               <td class="p-2">
                 <div class="flex gap-1">
-                  <button class="rounded border px-2 py-1 text-xs" @click="startEditShop(shop)">수정</button>
-                  <button class="rounded border border-red-200 px-2 py-1 text-xs text-red-600" @click="deleteShop(shop._id)">
+                  <button class="rounded border px-2 py-1 text-xs break-keep" @click="startEditShop(shop)">수정</button>
+                  <button class="rounded border border-red-200 px-2 py-1 text-xs text-red-600 break-keep" @click="deleteShop(shop._id)">
                     삭제
                   </button>
                 </div>
@@ -364,3 +366,10 @@ onMounted(async () => {
     </section>
   </div>
 </template>
+<style scoped lang="scss">
+table{
+  td{
+    word-break: keep-all;
+  }
+}
+</style>
