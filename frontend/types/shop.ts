@@ -1,3 +1,5 @@
+export type DataSourceType = 'manual' | 'crawl';
+
 export interface Shop {
   _id: string;
   name: string;
@@ -6,6 +8,14 @@ export interface Shop {
   phone?: string;
   description?: string;
   sourceName?: string;
+  homepage?: string;
+  instagram?: string;
+  kakaoChannel?: string;
+  businessHours?: string;
+  bookingNotes?: string;
+  manualMemo?: string;
+  dataSourceType?: DataSourceType;
+  isActive?: boolean;
   updatedAt: string;
 }
 

@@ -34,6 +34,14 @@ export const useBackofficeStore = defineStore('backoffice', {
         this.loading = false;
       }
     },
+    async createShop(payload: Partial<Shop>) {
+      await this.api('/shops', { method: 'POST', body: payload });
+      await this.fetchShops();
+    },
+    async updateShop(shopId: string, payload: Partial<Shop>) {
+      await this.api(`/shops/${shopId}`, { method: 'PUT', body: payload });
+      await this.fetchShops();
+    },
     async fetchSources() {
       this.sources = (await this.api('/sources')) as ScrapeSource[];
     },

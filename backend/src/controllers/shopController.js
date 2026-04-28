@@ -1,5 +1,24 @@
 import { Shop } from '../models/Shop.js';
 
+const normalizeShopPayload = (payload = {}, isUpdate = false) => {
+  const next = { ...payload };
+
+  if (!isUpdate) {
+    next.dataSourceType = payload.dataSourceType || 'manual';
+    next.sourceName = payload.sourceName || 'manual';
+  }
+
+  if (payload.dataSourceType === 'manual' && !payload.sourceName) {
+    next.sourceName = 'manual';
+  }
+
+  if (next.dataSourceType === 'manual') {
+    next.lastScrapedAt = undefined;
+  }
+
+  return next;
+};
+
 export const listShops = async (req, res, next) => {
   try {
     const page = Number(req.query.page || 1);
@@ -12,7 +31,8 @@ export const listShops = async (req, res, next) => {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
         { address: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+        { description: { $regex: search, $options: 'i' } },
+        { manualMemo: { $regex: search, $options: 'i' } }
       ];
     }
     if (city) {
@@ -35,7 +55,7 @@ export const listShops = async (req, res, next) => {
 
 export const createShop = async (req, res, next) => {
   try {
-    const created = await Shop.create(req.body);
+    const created = await Shop.create(normalizeShopPayload(req.body));
     res.status(201).json(created);
   } catch (error) {
     next(error);
@@ -44,7 +64,7 @@ export const createShop = async (req, res, next) => {
 
 export const updateShop = async (req, res, next) => {
   try {
-    const updated = await Shop.findByIdAndUpdate(req.params.id, req.body, {
+    const updated = await Shop.findByIdAndUpdate(req.params.id, normalizeShopPayload(req.body, true), {
       new: true,
       runValidators: true
     });
