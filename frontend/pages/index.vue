@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { computed, reactive, ref, onMounted } from 'vue';
 import { useBackofficeStore } from '~/stores/backoffice';
+import { SEOUL_CITY, seoulDistricts } from '~/data/seoulDistricts';
 
 const store = useBackofficeStore();
 const search = ref('');
+const searchDistrict = ref('');
+const searchTown = ref('');
 const editingShopId = ref<string | null>(null);
 
 const shopFormDefault = {
   name: '',
   address: '',
+  cityProvince: SEOUL_CITY,
+  district: '',
+  town: '',
+  addressDetail: '',
   city: '',
   phone: '',
   homepage: '',
@@ -38,6 +45,8 @@ const sourceForm = reactive({
 
 const isCustom = computed(() => sourceForm.type === 'custom');
 const isEditing = computed(() => Boolean(editingShopId.value));
+const districtOptions = computed(() => seoulDistricts.map((item) => item.district));
+const townOptions = computed(() => seoulDistricts.find((item) => item.district === shopForm.district)?.towns || []);
 const phoneDigits = computed(() => shopForm.phone.replace(/\D/g, ''));
 const isPhoneValid = computed(() => !shopForm.phone || /^0\d{1,2}-\d{3,4}-\d{4}$/.test(shopForm.phone));
 const phoneValidationMessage = computed(() =>
@@ -67,6 +76,12 @@ const onPhoneInput = (event: Event) => {
   shopForm.phone = formatPhone(input.value);
 };
 
+const onDistrictChange = () => {
+  if (!townOptions.value.includes(shopForm.town)) {
+    shopForm.town = '';
+  }
+};
+
 const resetShopForm = () => {
   Object.assign(shopForm, shopFormDefault);
   editingShopId.value = null;
@@ -77,6 +92,8 @@ const submitShop = async () => {
 
   const payload = {
     ...shopForm,
+    address: `${shopForm.cityProvince} ${shopForm.district} ${shopForm.town} ${shopForm.addressDetail}`.trim(),
+    city: shopForm.district,
     dataSourceType: 'manual' as const,
     sourceName: 'manual'
   };
@@ -95,6 +112,10 @@ const startEditShop = (shop: any) => {
   Object.assign(shopForm, {
     name: shop.name || '',
     address: shop.address || '',
+    cityProvince: shop.cityProvince || SEOUL_CITY,
+    district: shop.district || '',
+    town: shop.town || '',
+    addressDetail: shop.addressDetail || '',
     city: shop.city || '',
     phone: formatPhone(shop.phone || ''),
     homepage: shop.homepage || '',
@@ -149,7 +170,7 @@ const deleteSource = async (sourceId: string) => {
 
 const deleteShop = async (shopId: string) => {
   if (!confirm('이 매장을 삭제하시겠습니까?')) return;
-  await store.deleteShop(shopId, search.value);
+  await store.deleteShop(shopId, search.value, searchDistrict.value, searchTown.value);
 };
 
 const formatDateTime = (value?: string) => {
@@ -186,8 +207,22 @@ onMounted(async () => {
           <p v-if="phoneValidationMessage" class="mt-1 text-xs text-red-600">{{ phoneValidationMessage }}</p>
           <p v-else-if="phoneDigits.length > 0" class="mt-1 text-xs text-slate-500">입력 숫자: {{ phoneDigits }}</p>
         </div>
-        <input v-model="shopForm.address" class="rounded border p-2 md:col-span-2" placeholder="주소" />
-        <input v-model="shopForm.city" class="rounded border p-2" placeholder="도시/지역" />
+        <input v-model="shopForm.cityProvince" class="rounded border bg-slate-100 p-2" readonly />
+        <select v-model="shopForm.district" class="rounded border p-2" required @change="onDistrictChange">
+          <option disabled value="">지역구 선택</option>
+          <option v-for="district in districtOptions" :key="district" :value="district">{{ district }}</option>
+        </select>
+        <select v-model="shopForm.town" class="rounded border p-2" :disabled="!shopForm.district" required>
+          <option disabled value="">행정동/읍 선택</option>
+          <option v-for="town in townOptions" :key="town" :value="town">{{ town }}</option>
+        </select>
+        <input v-model="shopForm.addressDetail" class="rounded border p-2 md:col-span-2" placeholder="상세 주소 (번지/도로명/건물명)" />
+        <input
+          :value="`${shopForm.cityProvince} ${shopForm.district} ${shopForm.town} ${shopForm.addressDetail}`.trim()"
+          class="rounded border bg-slate-100 p-2 md:col-span-2 text-sm text-slate-600"
+          readonly
+          placeholder="조합된 주소"
+        />
         <input v-model="shopForm.homepage" class="rounded border p-2" placeholder="홈페이지 URL" />
         <input v-model="shopForm.instagram" class="rounded border p-2" placeholder="인스타그램" />
         <input v-model="shopForm.kakaoChannel" class="rounded border p-2" placeholder="카카오 채널" />
@@ -211,7 +246,21 @@ onMounted(async () => {
       <div class="mb-3 flex items-center gap-2">
         <h2 class="text-lg font-semibold">매장 목록</h2>
         <input v-model="search" class="rounded border p-1 text-sm" placeholder="검색어" />
-        <button class="rounded border px-3 py-1 text-sm" @click="store.fetchShops(search)">검색</button>
+        <select v-model="searchDistrict" class="rounded border p-1 text-sm" @change="searchTown = ''">
+          <option value="">전체 지역구</option>
+          <option v-for="district in districtOptions" :key="`search-${district}`" :value="district">{{ district }}</option>
+        </select>
+        <select v-model="searchTown" class="rounded border p-1 text-sm" :disabled="!searchDistrict">
+          <option value="">전체 행정동/읍</option>
+          <option
+            v-for="town in seoulDistricts.find((item) => item.district === searchDistrict)?.towns || []"
+            :key="`search-town-${town}`"
+            :value="town"
+          >
+            {{ town }}
+          </option>
+        </select>
+        <button class="rounded border px-3 py-1 text-sm" @click="store.fetchShops(search, searchDistrict, searchTown)">검색</button>
       </div>
       <p class="mb-2 text-xs text-slate-500">등록된 DB 총 {{ store.total }}건</p>
 
@@ -230,7 +279,7 @@ onMounted(async () => {
           <tbody>
             <tr v-for="shop in store.shops" :key="shop._id" class="border-t hover:bg-slate-100">
               <td class="p-2">{{ shop.name }}</td>
-              <td class="p-2">{{ shop.address }}</td>
+              <td class="p-2">{{ `${shop.cityProvince || '서울특별시'} ${shop.district || ''} ${shop.town || ''} ${shop.addressDetail || ''}`.trim() }}</td>
               <td class="p-2">{{ formatPhone(shop.phone) }}</td>
               <td class="p-2">{{ shop.instagram || shop.kakaoChannel || '-' }}</td>
               <td class="p-2">{{ shop.isActive ? '활성' : '비활성' }}</td>

@@ -24,10 +24,12 @@ export const useBackofficeStore = defineStore('backoffice', {
       const config = useRuntimeConfig();
       return $fetch(`${config.public.apiBase}${path}`, options);
     },
-    async fetchShops(search = '') {
+    async fetchShops(search = '', district = '', town = '') {
       this.loading = true;
       try {
-        const data: any = await this.api(`/shops?page=${this.page}&limit=${this.limit}&search=${encodeURIComponent(search)}`);
+        const data: any = await this.api(
+          `/shops?page=${this.page}&limit=${this.limit}&search=${encodeURIComponent(search)}&district=${encodeURIComponent(district)}&town=${encodeURIComponent(town)}`
+        );
         this.shops = data.items;
         this.total = data.total;
       } finally {
@@ -53,9 +55,9 @@ export const useBackofficeStore = defineStore('backoffice', {
       await this.api(`/sources/${sourceId}`, { method: 'DELETE' });
       await this.fetchSources();
     },
-    async deleteShop(shopId: string, search = '') {
+    async deleteShop(shopId: string, search = '', district = '', town = '') {
       await this.api(`/shops/${shopId}`, { method: 'DELETE' });
-      await this.fetchShops(search);
+      await this.fetchShops(search, district, town);
     },
     async runScraping(sourceId?: string) {
       const response: any = await this.api('/scrape/run', {

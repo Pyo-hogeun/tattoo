@@ -4,6 +4,10 @@ const ShopSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, index: true, trim: true },
     address: { type: String, index: true, trim: true },
+    cityProvince: { type: String, trim: true, default: '서울특별시', index: true },
+    district: { type: String, trim: true, index: true },
+    town: { type: String, trim: true, index: true },
+    addressDetail: { type: String, trim: true },
     city: { type: String, index: true, trim: true },
     phone: { type: String, index: true, trim: true },
     description: { type: String, trim: true },

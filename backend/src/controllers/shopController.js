@@ -25,6 +25,8 @@ export const listShops = async (req, res, next) => {
     const limit = Number(req.query.limit || 20);
     const search = req.query.search?.trim();
     const city = req.query.city?.trim();
+    const district = req.query.district?.trim();
+    const town = req.query.town?.trim();
 
     const filter = {};
     if (search) {
@@ -37,6 +39,12 @@ export const listShops = async (req, res, next) => {
     }
     if (city) {
       filter.city = { $regex: `^${city}$`, $options: 'i' };
+    }
+    if (district) {
+      filter.district = { $regex: `^${district}$`, $options: 'i' };
+    }
+    if (town) {
+      filter.town = { $regex: `^${town}$`, $options: 'i' };
     }
 
     const [items, total] = await Promise.all([

@@ -4,6 +4,10 @@ export interface Shop {
   _id: string;
   name: string;
   address?: string;
+  cityProvince?: string;
+  district?: string;
+  town?: string;
+  addressDetail?: string;
   city?: string;
   phone?: string;
   description?: string;
