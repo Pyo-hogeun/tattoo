@@ -19,6 +19,7 @@ const ShopSchema = new mongoose.Schema(
     kakaoChannel: { type: String, trim: true },
     tags: [String],
     businessHours: { type: String, trim: true },
+    businessHoursDetail: mongoose.Schema.Types.Mixed,
     bookingNotes: { type: String, trim: true },
     manualMemo: { type: String, trim: true },
     raw: mongoose.Schema.Types.Mixed,

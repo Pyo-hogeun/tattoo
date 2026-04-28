@@ -16,6 +16,12 @@ export interface Shop {
   instagram?: string;
   kakaoChannel?: string;
   businessHours?: string;
+  businessHoursDetail?: {
+    perDay: boolean;
+    defaultOpen?: string;
+    defaultClose?: string;
+    byDay?: Record<string, { open: string; close: string; enabled: boolean }>;
+  };
   bookingNotes?: string;
   manualMemo?: string;
   dataSourceType?: DataSourceType;

@@ -8,6 +8,16 @@ const search = ref('');
 const searchDistrict = ref('');
 const searchTown = ref('');
 const editingShopId = ref<string | null>(null);
+const weekdayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+const weekdayLabels: Record<(typeof weekdayKeys)[number], string> = {
+  mon: '월',
+  tue: '화',
+  wed: '수',
+  thu: '목',
+  fri: '금',
+  sat: '토',
+  sun: '일'
+};
 
 const shopFormDefault = {
   name: '',
@@ -29,6 +39,14 @@ const shopFormDefault = {
 };
 
 const shopForm = reactive({ ...shopFormDefault });
+const usePerDayHours = ref(false);
+const defaultOpenTime = ref('10:00');
+const defaultCloseTime = ref('20:00');
+const hoursByDay = reactive(
+  Object.fromEntries(
+    weekdayKeys.map((day) => [day, { enabled: true, open: '10:00', close: '20:00' }])
+  ) as Record<(typeof weekdayKeys)[number], { enabled: boolean; open: string; close: string }>
+);
 
 const sourceForm = reactive({
   name: '',
@@ -53,6 +71,15 @@ const phoneValidationMessage = computed(() =>
   isPhoneValid.value ? '' : '연락처 형식이 올바르지 않습니다. 예: 010-1234-5678'
 );
 const canSubmitShop = computed(() => Boolean(shopForm.name.trim()) && isPhoneValid.value);
+const timeOptions = computed(() => {
+  const options: string[] = [];
+  for (let hour = 0; hour < 24; hour += 1) {
+    for (let minute = 0; minute < 60; minute += 10) {
+      options.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+    }
+  }
+  return options;
+});
 
 const formatPhone = (value?: string) => {
   if (!value) return '';
@@ -82,8 +109,43 @@ const onDistrictChange = () => {
   }
 };
 
+const buildBusinessHoursPayload = () => {
+  if (!usePerDayHours.value) {
+    return {
+      businessHours: `매일 ${defaultOpenTime.value} - ${defaultCloseTime.value}`,
+      businessHoursDetail: {
+        perDay: false,
+        defaultOpen: defaultOpenTime.value,
+        defaultClose: defaultCloseTime.value
+      }
+    };
+  }
+
+  const summary = weekdayKeys
+    .map((day) => {
+      const item = hoursByDay[day];
+      if (!item.enabled) return `${weekdayLabels[day]} 휴무`;
+      return `${weekdayLabels[day]} ${item.open}-${item.close}`;
+    })
+    .join(', ');
+
+  return {
+    businessHours: summary,
+    businessHoursDetail: {
+      perDay: true,
+      byDay: Object.fromEntries(weekdayKeys.map((day) => [day, { ...hoursByDay[day] }]))
+    }
+  };
+};
+
 const resetShopForm = () => {
   Object.assign(shopForm, shopFormDefault);
+  usePerDayHours.value = false;
+  defaultOpenTime.value = '10:00';
+  defaultCloseTime.value = '20:00';
+  weekdayKeys.forEach((day) => {
+    hoursByDay[day] = { enabled: true, open: '10:00', close: '20:00' };
+  });
   editingShopId.value = null;
 };
 
@@ -92,6 +154,7 @@ const submitShop = async () => {
 
   const payload = {
     ...shopForm,
+    ...buildBusinessHoursPayload(),
     address: `${shopForm.cityProvince} ${shopForm.district} ${shopForm.town} ${shopForm.addressDetail}`.trim(),
     city: shopForm.district,
     dataSourceType: 'manual' as const,
@@ -108,6 +171,23 @@ const submitShop = async () => {
 };
 
 const startEditShop = (shop: any) => {
+  const detail = shop.businessHoursDetail || {};
+  usePerDayHours.value = Boolean(detail.perDay);
+  defaultOpenTime.value = detail.defaultOpen || '10:00';
+  defaultCloseTime.value = detail.defaultClose || '20:00';
+  weekdayKeys.forEach((day) => {
+    hoursByDay[day] = { enabled: true, open: '10:00', close: '20:00' };
+  });
+  if (detail.byDay) {
+    weekdayKeys.forEach((day) => {
+      hoursByDay[day] = {
+        enabled: detail.byDay?.[day]?.enabled ?? true,
+        open: detail.byDay?.[day]?.open || '10:00',
+        close: detail.byDay?.[day]?.close || '20:00'
+      };
+    });
+  }
+
   editingShopId.value = shop._id;
   Object.assign(shopForm, {
     name: shop.name || '',
@@ -231,7 +311,47 @@ onMounted(async () => {
         <input v-model="shopForm.homepage" class="rounded border p-2" placeholder="홈페이지 URL" />
         <input v-model="shopForm.instagram" class="rounded border p-2" placeholder="인스타그램" />
         <input v-model="shopForm.kakaoChannel" class="rounded border p-2" placeholder="카카오 채널" />
-        <input v-model="shopForm.businessHours" class="rounded border p-2 md:col-span-2" placeholder="영업시간" />
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 md:col-span-2">
+          <div class="mb-2 flex items-center justify-between">
+            <p class="text-xs font-semibold text-emerald-700">영업시간 입력 (10분 단위)</p>
+            <label class="flex items-center gap-2 text-xs text-slate-700">
+              <input v-model="usePerDayHours" type="checkbox" />
+              요일별로 각각 입력
+            </label>
+          </div>
+
+          <div v-if="!usePerDayHours" class="grid gap-2 md:grid-cols-2">
+            <div>
+              <p class="mb-1 text-xs text-slate-600">Open</p>
+              <select v-model="defaultOpenTime" class="w-full rounded border p-2">
+                <option v-for="time in timeOptions" :key="`default-open-${time}`" :value="time">{{ time }}</option>
+              </select>
+            </div>
+            <div>
+              <p class="mb-1 text-xs text-slate-600">Close</p>
+              <select v-model="defaultCloseTime" class="w-full rounded border p-2">
+                <option v-for="time in timeOptions" :key="`default-close-${time}`" :value="time">{{ time }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div v-else class="space-y-2">
+            <div v-for="day in weekdayKeys" :key="day" class="grid items-center gap-2 md:grid-cols-[80px,80px,1fr,1fr]">
+              <span class="text-sm font-medium">{{ weekdayLabels[day] }}요일</span>
+              <label class="text-xs">
+                <input v-model="hoursByDay[day].enabled" type="checkbox" />
+                영업
+              </label>
+              <select v-model="hoursByDay[day].open" class="rounded border p-2" :disabled="!hoursByDay[day].enabled">
+                <option v-for="time in timeOptions" :key="`${day}-open-${time}`" :value="time">{{ time }}</option>
+              </select>
+              <select v-model="hoursByDay[day].close" class="rounded border p-2" :disabled="!hoursByDay[day].enabled">
+                <option v-for="time in timeOptions" :key="`${day}-close-${time}`" :value="time">{{ time }}</option>
+              </select>
+            </div>
+          </div>
+          <p class="mt-2 text-xs text-slate-600">저장 미리보기: {{ buildBusinessHoursPayload().businessHours }}</p>
+        </div>
         <input v-model="shopForm.bookingNotes" class="rounded border p-2 md:col-span-2" placeholder="예약/상담 메모" />
         <textarea v-model="shopForm.description" class="rounded border p-2 md:col-span-2" placeholder="설명" rows="2" />
         <textarea v-model="shopForm.manualMemo" class="rounded border p-2 md:col-span-2" placeholder="운영 메모" rows="2" />
