@@ -6,7 +6,6 @@ import { SEOUL_CITY, seoulDistricts } from '~/data/seoulDistricts';
 const store = useBackofficeStore();
 const search = ref('');
 const searchDistrict = ref('');
-const searchTown = ref('');
 const showInvalidOnly = ref(false);
 const hideInvalidCases = ref(false);
 const editingShopId = ref<string | null>(null);
@@ -71,12 +70,12 @@ const loadMoreTrigger = ref<HTMLElement | null>(null);
 const observer = ref<IntersectionObserver | null>(null);
 
 const fetchFirstPage = async () => {
-  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, hideInvalidCases.value, false);
+  await store.fetchShops(search.value, searchDistrict.value, showInvalidOnly.value, hideInvalidCases.value, false);
 };
 
 const fetchMoreShops = async () => {
   if (store.loading || !store.hasMore) return;
-  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, hideInvalidCases.value, true);
+  await store.fetchShops(search.value, searchDistrict.value, showInvalidOnly.value, hideInvalidCases.value, true);
 };
 
 const formatPhone = (value?: string) => {
@@ -209,7 +208,7 @@ const startEditShop = (shop: any) => {
 
 const deleteShop = async (shopId: string) => {
   if (!confirm('이 매장을 삭제하시겠습니까?')) return;
-  await store.deleteShop(shopId, search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, hideInvalidCases.value);
+  await store.deleteShop(shopId, search.value, searchDistrict.value, showInvalidOnly.value, hideInvalidCases.value);
   if (!store.hasMore && store.total > store.shops.length) {
     await fetchMoreShops();
   }
@@ -235,7 +234,7 @@ onBeforeUnmount(() => {
   observer.value?.disconnect();
 });
 
-watch([search, searchDistrict, searchTown, showInvalidOnly, hideInvalidCases], () => {
+watch([search, searchDistrict, showInvalidOnly, hideInvalidCases], () => {
   fetchFirstPage();
 });
 
@@ -364,19 +363,9 @@ watch(loadMoreTrigger, (target) => {
         <div class="mb-3 flex items-center gap-2">
           <h2 class="text-lg font-semibold">매장 목록</h2>
           <input v-model="search" class="rounded border p-1 text-sm" placeholder="검색어" />
-          <select v-model="searchDistrict" class="rounded border p-1 text-sm" @change="searchTown = ''">
+          <select v-model="searchDistrict" class="rounded border p-1 text-sm" >
             <option value="">전체 지역구</option>
             <option v-for="district in districtOptions" :key="`search-${district}`" :value="district">{{ district }}</option>
-          </select>
-          <select v-model="searchTown" class="rounded border p-1 text-sm" :disabled="!searchDistrict">
-            <option value="">전체 행정동/읍</option>
-            <option
-              v-for="town in seoulDistricts.find((item) => item.district === searchDistrict)?.towns || []"
-              :key="`search-town-${town}`"
-              :value="town"
-            >
-              {{ town }}
-            </option>
           </select>
           
           <label class="flex items-center gap-1 text-xs text-slate-700">

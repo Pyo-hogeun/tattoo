@@ -27,7 +27,6 @@ export const listShops = async (req, res, next) => {
     const search = req.query.search?.trim();
     const city = req.query.city?.trim();
     const district = req.query.district?.trim();
-    const town = req.query.town?.trim();
     const invalidOnly = String(req.query.invalidOnly || '').toLowerCase() === 'true';
     const validOnly = String(req.query.validOnly || '').toLowerCase() === 'true';
 
@@ -53,10 +52,7 @@ export const listShops = async (req, res, next) => {
       filter.city = { $regex: `^${city}$`, $options: 'i' };
     }
     if (district) {
-      filter.district = { $regex: `^${district}$`, $options: 'i' };
-    }
-    if (town) {
-      filter.town = { $regex: `^${town}$`, $options: 'i' };
+      filter.address = { $regex: district, $options: 'i' };
     }
     if (invalidOnly) {
       filter.$and = [...(filter.$and || []), invalidCaseFilter];
