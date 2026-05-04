@@ -1,4 +1,5 @@
 import { Shop } from '../models/Shop.js';
+import { validateSeoulShopPayload } from '../utils/seoulValidation.js';
 
 const normalizeShopPayload = (payload = {}, isUpdate = false) => {
   const next = { ...payload };
@@ -63,7 +64,13 @@ export const listShops = async (req, res, next) => {
 
 export const createShop = async (req, res, next) => {
   try {
-    const created = await Shop.create(normalizeShopPayload(req.body));
+    const normalizedPayload = normalizeShopPayload(req.body);
+    const validation = validateSeoulShopPayload(normalizedPayload);
+    if (!validation.isValid) {
+      return res.status(400).json({ message: '서울특별시 매장 데이터 검증 실패', errors: validation.errors });
+    }
+
+    const created = await Shop.create(normalizedPayload);
     res.status(201).json(created);
   } catch (error) {
     next(error);
@@ -72,7 +79,13 @@ export const createShop = async (req, res, next) => {
 
 export const updateShop = async (req, res, next) => {
   try {
-    const updated = await Shop.findByIdAndUpdate(req.params.id, normalizeShopPayload(req.body, true), {
+    const normalizedPayload = normalizeShopPayload(req.body, true);
+    const validation = validateSeoulShopPayload(normalizedPayload);
+    if (!validation.isValid) {
+      return res.status(400).json({ message: '서울특별시 매장 데이터 검증 실패', errors: validation.errors });
+    }
+
+    const updated = await Shop.findByIdAndUpdate(req.params.id, normalizedPayload, {
       new: true,
       runValidators: true
     });

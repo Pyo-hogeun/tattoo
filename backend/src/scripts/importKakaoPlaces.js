@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { connectDB } from '../config/db.js';
 import { env } from '../config/env.js';
 import { Shop } from '../models/Shop.js';
+import { validateSeoulShopPayload } from '../utils/seoulValidation.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,6 +107,9 @@ const run = async () => {
 
         for (const document of data.documents) {
           const payload = normalizeDocumentToShop(district, town, KEYWORD, document);
+          const validation = validateSeoulShopPayload(payload);
+          if (!validation.isValid) continue;
+
           await upsertShop(payload);
           upsertedCount += 1;
         }
