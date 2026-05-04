@@ -29,8 +29,18 @@ export const listShops = async (req, res, next) => {
     const district = req.query.district?.trim();
     const town = req.query.town?.trim();
     const invalidOnly = String(req.query.invalidOnly || '').toLowerCase() === 'true';
+    const validOnly = String(req.query.validOnly || '').toLowerCase() === 'true';
 
     const filter = {};
+    const seoulDistricts = getSeoulDistrictList();
+    const invalidCaseFilter = {
+      $or: [
+        { cityProvince: { $ne: '서울특별시' } },
+        { district: { $nin: seoulDistricts } },
+        { address: { $not: /서울/ } }
+      ]
+    };
+
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -49,17 +59,10 @@ export const listShops = async (req, res, next) => {
       filter.town = { $regex: `^${town}$`, $options: 'i' };
     }
     if (invalidOnly) {
-      const seoulDistricts = getSeoulDistrictList();
-      filter.$and = [
-        ...(filter.$and || []),
-        {
-          $or: [
-            { cityProvince: { $ne: '서울특별시' } },
-            { district: { $nin: seoulDistricts } },
-            { address: { $not: /서울/ } }
-          ]
-        }
-      ];
+      filter.$and = [...(filter.$and || []), invalidCaseFilter];
+    }
+    if (validOnly) {
+      filter.$and = [...(filter.$and || []), { $nor: invalidCaseFilter.$or }];
     }
 
     const [items, total] = await Promise.all([

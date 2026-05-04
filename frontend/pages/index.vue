@@ -8,6 +8,7 @@ const search = ref('');
 const searchDistrict = ref('');
 const searchTown = ref('');
 const showInvalidOnly = ref(false);
+const hideInvalidCases = ref(false);
 const editingShopId = ref<string | null>(null);
 const weekdayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const weekdayLabels: Record<(typeof weekdayKeys)[number], string> = {
@@ -70,12 +71,12 @@ const loadMoreTrigger = ref<HTMLElement | null>(null);
 const observer = ref<IntersectionObserver | null>(null);
 
 const fetchFirstPage = async () => {
-  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, false);
+  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, hideInvalidCases.value, false);
 };
 
 const fetchMoreShops = async () => {
   if (store.loading || !store.hasMore) return;
-  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, true);
+  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, hideInvalidCases.value, true);
 };
 
 const formatPhone = (value?: string) => {
@@ -208,7 +209,7 @@ const startEditShop = (shop: any) => {
 
 const deleteShop = async (shopId: string) => {
   if (!confirm('이 매장을 삭제하시겠습니까?')) return;
-  await store.deleteShop(shopId, search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value);
+  await store.deleteShop(shopId, search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, hideInvalidCases.value);
   if (!store.hasMore && store.total > store.shops.length) {
     await fetchMoreShops();
   }
@@ -234,8 +235,16 @@ onBeforeUnmount(() => {
   observer.value?.disconnect();
 });
 
-watch([search, searchDistrict, searchTown, showInvalidOnly], () => {
+watch([search, searchDistrict, searchTown, showInvalidOnly, hideInvalidCases], () => {
   fetchFirstPage();
+});
+
+watch(showInvalidOnly, (value) => {
+  if (value) hideInvalidCases.value = false;
+});
+
+watch(hideInvalidCases, (value) => {
+  if (value) showInvalidOnly.value = false;
 });
 
 watch(loadMoreTrigger, (target) => {
@@ -374,6 +383,10 @@ watch(loadMoreTrigger, (target) => {
             <input v-model="showInvalidOnly" type="checkbox" />
             실패 케이스만
           </label>
+          <label class="flex items-center gap-1 text-xs text-slate-700">
+            <input v-model="hideInvalidCases" type="checkbox" />
+            실패 케이스 제외
+          </label>
           <button class="rounded border px-3 py-1 text-sm" @click="fetchFirstPage">검색</button>
         </div>
         <p class="mb-2 text-xs text-slate-500">등록된 DB 총 {{ store.total }}건</p>
@@ -385,7 +398,8 @@ watch(loadMoreTrigger, (target) => {
           <thead class="bg-slate-100 text-left">
             <tr>
               <th class="p-2">이름</th>
-              <th class="p-2">주소</th>
+              <th class="p-2">검색 region</th>
+              <th class="p-2">실제 DB 주소</th>
               <th class="p-2">연락처</th>
               <th class="p-2">채널</th>
               <th class="p-2">상태</th>
@@ -395,7 +409,8 @@ watch(loadMoreTrigger, (target) => {
           <tbody>
             <tr v-for="shop in store.shops" :key="shop._id" class="border-t hover:bg-slate-100">
               <td class="p-2">{{ shop.name }}</td>
-              <td class="p-2">{{ `${shop.cityProvince || '서울특별시'} ${shop.district || ''} ${shop.town || ''} ${shop.addressDetail || ''}`.trim() }}</td>
+              <td class="p-2">{{ `${shop.district || '-'} ${shop.town || ''}`.trim() }}</td>
+              <td class="p-2">{{ shop.address || `${shop.cityProvince || '서울특별시'} ${shop.district || ''} ${shop.town || ''} ${shop.addressDetail || ''}`.trim() }}</td>
               <td class="p-2">{{ formatPhone(shop.phone) }}</td>
               <td class="p-2">{{ shop.instagram || shop.kakaoChannel || '-' }}</td>
               <td class="p-2">{{ shop.isActive ? '활성' : '비활성' }}</td>
