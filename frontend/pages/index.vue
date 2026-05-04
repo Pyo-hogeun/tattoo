@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, onMounted } from 'vue';
+import { computed, reactive, ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useBackofficeStore } from '~/stores/backoffice';
 import { SEOUL_CITY, seoulDistricts } from '~/data/seoulDistricts';
 
@@ -65,6 +65,17 @@ const timeOptions = computed(() => {
   }
   return options;
 });
+const loadMoreTrigger = ref<HTMLElement | null>(null);
+const observer = ref<IntersectionObserver | null>(null);
+
+const fetchFirstPage = async () => {
+  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, false);
+};
+
+const fetchMoreShops = async () => {
+  if (store.loading || !store.hasMore) return;
+  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, true);
+};
 
 const formatPhone = (value?: string) => {
   if (!value) return '';
@@ -197,10 +208,38 @@ const startEditShop = (shop: any) => {
 const deleteShop = async (shopId: string) => {
   if (!confirm('이 매장을 삭제하시겠습니까?')) return;
   await store.deleteShop(shopId, search.value, searchDistrict.value, searchTown.value);
+  if (!store.hasMore && store.total > store.shops.length) {
+    await fetchMoreShops();
+  }
 };
 
 onMounted(async () => {
-  await store.fetchShops();
+  await fetchFirstPage();
+  observer.value = new IntersectionObserver(
+    (entries) => {
+      const first = entries[0];
+      if (first?.isIntersecting) {
+        fetchMoreShops();
+      }
+    },
+    { rootMargin: '120px' }
+  );
+  if (loadMoreTrigger.value) {
+    observer.value.observe(loadMoreTrigger.value);
+  }
+});
+
+onBeforeUnmount(() => {
+  observer.value?.disconnect();
+});
+
+watch([search, searchDistrict, searchTown], () => {
+  fetchFirstPage();
+});
+
+watch(loadMoreTrigger, (target) => {
+  if (!observer.value || !target) return;
+  observer.value.observe(target);
 });
 </script>
 
@@ -328,7 +367,7 @@ onMounted(async () => {
             {{ town }}
           </option>
         </select>
-        <button class="rounded border px-3 py-1 text-sm" @click="store.fetchShops(search, searchDistrict, searchTown)">검색</button>
+        <button class="rounded border px-3 py-1 text-sm" @click="fetchFirstPage">검색</button>
       </div>
       <p class="mb-2 text-xs text-slate-500">등록된 DB 총 {{ store.total }}건</p>
 
@@ -363,6 +402,18 @@ onMounted(async () => {
           </tbody>
         </table>
       </div>
+      <div class="mt-3 flex justify-center">
+        <button
+          v-if="store.hasMore"
+          class="rounded border px-4 py-2 text-sm"
+          :disabled="store.loading"
+          @click="fetchMoreShops"
+        >
+          {{ store.loading ? '불러오는 중...' : '목록 더보기' }}
+        </button>
+        <p v-else class="text-xs text-slate-500">모든 매장을 불러왔습니다.</p>
+      </div>
+      <div ref="loadMoreTrigger" class="h-2" aria-hidden="true" />
     </section>
   </div>
 </template>
