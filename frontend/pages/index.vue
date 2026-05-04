@@ -383,25 +383,42 @@ watch(loadMoreTrigger, (target) => {
 
       <div class="flex-1 min-h-0 overflow-y-auto">
         <div class="overflow-x-auto">
-          <table class="min-w-full text-sm store-list">
+          <table class="min-w-full text-sm store-list table-fixed">
           <thead class="bg-slate-100 text-left">
             <tr>
-              <th class="p-2">이름</th>
-              <th class="p-2">검색 region</th>
-              <th class="p-2">실제 DB 주소</th>
-              <th class="p-2">연락처</th>
-              <th class="p-2">채널</th>
-              <th class="p-2">상태</th>
-              <th class="p-2">관리</th>
+              <th class="w-40 p-2">이름</th>
+              <th class="w-32 p-2">검색 region</th>
+              <th class="w-[28%] p-2">실제 DB 주소</th>
+              <th class="w-32 p-2">연락처</th>
+              <th class="w-24 p-2">채널</th>
+              <th class="w-20 p-2">상태</th>
+              <th class="w-28 p-2">관리</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="shop in store.shops" :key="shop._id" class="border-t hover:bg-slate-100">
-              <td class="p-2">{{ shop.name }}</td>
-              <td class="p-2">{{ `${shop.district || '-'} ${shop.town || ''}`.trim() }}</td>
-              <td class="p-2">{{ shop.address || `${shop.cityProvince || '서울특별시'} ${shop.district || ''} ${shop.town || ''} ${shop.addressDetail || ''}`.trim() }}</td>
+              <td class="p-2 truncate">{{ shop.name }}</td>
+              <td class="p-2 truncate">{{ `${shop.district || '-'} ${shop.town || ''}`.trim() }}</td>
+              <td class="p-2 truncate">{{ shop.address || `${shop.cityProvince || '서울특별시'} ${shop.district || ''} ${shop.town || ''} ${shop.addressDetail || ''}`.trim() }}</td>
               <td class="p-2">{{ formatPhone(shop.phone) }}</td>
-              <td class="p-2">{{ shop.instagram || shop.kakaoChannel || '-' }}</td>
+              <td class="p-2">
+                <div v-if="shop.instagram" class="group relative inline-flex max-w-full">
+                  <a
+                    :href="shop.instagram"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="block max-w-full truncate text-xs text-indigo-600"
+                  >
+                    insta
+                  </a>
+                  <div class="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden min-w-56 max-w-xs rounded border bg-white p-2 text-xs text-slate-700 shadow group-hover:block">
+                    <a :href="shop.instagram" target="_blank" rel="noopener noreferrer" class="break-all text-indigo-600 hover:underline">
+                      {{ shop.instagram }}
+                    </a>
+                  </div>
+                </div>
+                <span v-else class="truncate text-xs text-slate-600">{{ shop.kakaoChannel || '-' }}</span>
+              </td>
               <td class="p-2">{{ shop.isActive ? '활성' : '비활성' }}</td>
               <td class="p-2">
                 <div class="flex gap-1">
@@ -436,5 +453,12 @@ table{
   td{
     word-break: keep-all;
   }
+}
+
+.store-list td,
+.store-list th {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>
