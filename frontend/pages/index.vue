@@ -349,30 +349,33 @@ watch(loadMoreTrigger, (target) => {
       </form>
     </section>
 
-    <section class="rounded-xl border bg-white p-4 shadow-sm h-[55vh] overflow-y-auto">
-      <div class="mb-3 flex items-center gap-2">
-        <h2 class="text-lg font-semibold">매장 목록</h2>
-        <input v-model="search" class="rounded border p-1 text-sm" placeholder="검색어" />
-        <select v-model="searchDistrict" class="rounded border p-1 text-sm" @change="searchTown = ''">
-          <option value="">전체 지역구</option>
-          <option v-for="district in districtOptions" :key="`search-${district}`" :value="district">{{ district }}</option>
-        </select>
-        <select v-model="searchTown" class="rounded border p-1 text-sm" :disabled="!searchDistrict">
-          <option value="">전체 행정동/읍</option>
-          <option
-            v-for="town in seoulDistricts.find((item) => item.district === searchDistrict)?.towns || []"
-            :key="`search-town-${town}`"
-            :value="town"
-          >
-            {{ town }}
-          </option>
-        </select>
-        <button class="rounded border px-3 py-1 text-sm" @click="fetchFirstPage">검색</button>
+    <section class="rounded-xl border bg-white p-4 shadow-sm h-[55vh] flex flex-col">
+      <div class="sticky top-0 z-10 bg-white">
+        <div class="mb-3 flex items-center gap-2">
+          <h2 class="text-lg font-semibold">매장 목록</h2>
+          <input v-model="search" class="rounded border p-1 text-sm" placeholder="검색어" />
+          <select v-model="searchDistrict" class="rounded border p-1 text-sm" @change="searchTown = ''">
+            <option value="">전체 지역구</option>
+            <option v-for="district in districtOptions" :key="`search-${district}`" :value="district">{{ district }}</option>
+          </select>
+          <select v-model="searchTown" class="rounded border p-1 text-sm" :disabled="!searchDistrict">
+            <option value="">전체 행정동/읍</option>
+            <option
+              v-for="town in seoulDistricts.find((item) => item.district === searchDistrict)?.towns || []"
+              :key="`search-town-${town}`"
+              :value="town"
+            >
+              {{ town }}
+            </option>
+          </select>
+          <button class="rounded border px-3 py-1 text-sm" @click="fetchFirstPage">검색</button>
+        </div>
+        <p class="mb-2 text-xs text-slate-500">등록된 DB 총 {{ store.total }}건</p>
       </div>
-      <p class="mb-2 text-xs text-slate-500">등록된 DB 총 {{ store.total }}건</p>
 
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm store-list">
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm store-list">
           <thead class="bg-slate-100 text-left">
             <tr>
               <th class="p-2">이름</th>
@@ -400,20 +403,21 @@ watch(loadMoreTrigger, (target) => {
               </td>
             </tr>
           </tbody>
-        </table>
+          </table>
+        </div>
+        <div class="mt-3 flex justify-center">
+          <button
+            v-if="store.hasMore"
+            class="rounded border px-4 py-2 text-sm"
+            :disabled="store.loading"
+            @click="fetchMoreShops"
+          >
+            {{ store.loading ? '불러오는 중...' : '목록 더보기' }}
+          </button>
+          <p v-else class="text-xs text-slate-500">모든 매장을 불러왔습니다.</p>
+        </div>
+        <div ref="loadMoreTrigger" class="h-2" aria-hidden="true" />
       </div>
-      <div class="mt-3 flex justify-center">
-        <button
-          v-if="store.hasMore"
-          class="rounded border px-4 py-2 text-sm"
-          :disabled="store.loading"
-          @click="fetchMoreShops"
-        >
-          {{ store.loading ? '불러오는 중...' : '목록 더보기' }}
-        </button>
-        <p v-else class="text-xs text-slate-500">모든 매장을 불러왔습니다.</p>
-      </div>
-      <div ref="loadMoreTrigger" class="h-2" aria-hidden="true" />
     </section>
   </div>
 </template>
