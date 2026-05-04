@@ -57,3 +57,8 @@ export const validateSeoulShopPayload = (payload = {}) => {
     errors
   };
 };
+
+export const getSeoulDistrictList = () => {
+  loadSeoulDistrictData();
+  return Array.from(cachedDistricts);
+};

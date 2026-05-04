@@ -1,5 +1,5 @@
 import { Shop } from '../models/Shop.js';
-import { validateSeoulShopPayload } from '../utils/seoulValidation.js';
+import { getSeoulDistrictList, validateSeoulShopPayload } from '../utils/seoulValidation.js';
 
 const normalizeShopPayload = (payload = {}, isUpdate = false) => {
   const next = { ...payload };
@@ -28,6 +28,7 @@ export const listShops = async (req, res, next) => {
     const city = req.query.city?.trim();
     const district = req.query.district?.trim();
     const town = req.query.town?.trim();
+    const invalidOnly = String(req.query.invalidOnly || '').toLowerCase() === 'true';
 
     const filter = {};
     if (search) {
@@ -46,6 +47,19 @@ export const listShops = async (req, res, next) => {
     }
     if (town) {
       filter.town = { $regex: `^${town}$`, $options: 'i' };
+    }
+    if (invalidOnly) {
+      const seoulDistricts = getSeoulDistrictList();
+      filter.$and = [
+        ...(filter.$and || []),
+        {
+          $or: [
+            { cityProvince: { $ne: '서울특별시' } },
+            { district: { $nin: seoulDistricts } },
+            { address: { $not: /서울/ } }
+          ]
+        }
+      ];
     }
 
     const [items, total] = await Promise.all([

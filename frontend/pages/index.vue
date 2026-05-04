@@ -7,6 +7,7 @@ const store = useBackofficeStore();
 const search = ref('');
 const searchDistrict = ref('');
 const searchTown = ref('');
+const showInvalidOnly = ref(false);
 const editingShopId = ref<string | null>(null);
 const weekdayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const weekdayLabels: Record<(typeof weekdayKeys)[number], string> = {
@@ -69,12 +70,12 @@ const loadMoreTrigger = ref<HTMLElement | null>(null);
 const observer = ref<IntersectionObserver | null>(null);
 
 const fetchFirstPage = async () => {
-  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, false);
+  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, false);
 };
 
 const fetchMoreShops = async () => {
   if (store.loading || !store.hasMore) return;
-  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, true);
+  await store.fetchShops(search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value, true);
 };
 
 const formatPhone = (value?: string) => {
@@ -207,7 +208,7 @@ const startEditShop = (shop: any) => {
 
 const deleteShop = async (shopId: string) => {
   if (!confirm('이 매장을 삭제하시겠습니까?')) return;
-  await store.deleteShop(shopId, search.value, searchDistrict.value, searchTown.value);
+  await store.deleteShop(shopId, search.value, searchDistrict.value, searchTown.value, showInvalidOnly.value);
   if (!store.hasMore && store.total > store.shops.length) {
     await fetchMoreShops();
   }
@@ -233,7 +234,7 @@ onBeforeUnmount(() => {
   observer.value?.disconnect();
 });
 
-watch([search, searchDistrict, searchTown], () => {
+watch([search, searchDistrict, searchTown, showInvalidOnly], () => {
   fetchFirstPage();
 });
 
@@ -368,6 +369,11 @@ watch(loadMoreTrigger, (target) => {
               {{ town }}
             </option>
           </select>
+          
+          <label class="flex items-center gap-1 text-xs text-slate-700">
+            <input v-model="showInvalidOnly" type="checkbox" />
+            실패 케이스만
+          </label>
           <button class="rounded border px-3 py-1 text-sm" @click="fetchFirstPage">검색</button>
         </div>
         <p class="mb-2 text-xs text-slate-500">등록된 DB 총 {{ store.total }}건</p>

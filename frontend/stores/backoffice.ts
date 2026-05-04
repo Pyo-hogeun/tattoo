@@ -15,12 +15,12 @@ export const useBackofficeStore = defineStore('backoffice', {
       const config = useRuntimeConfig();
       return $fetch(`${config.public.apiBase}${path}`, options);
     },
-    async fetchShops(search = '', district = '', town = '', append = false) {
+    async fetchShops(search = '', district = '', town = '', invalidOnly = false, append = false) {
       const nextPage = append ? this.page + 1 : 1;
       this.loading = true;
       try {
         const data: any = await this.api(
-          `/shops?page=${nextPage}&limit=${this.limit}&search=${encodeURIComponent(search)}&district=${encodeURIComponent(district)}&town=${encodeURIComponent(town)}`
+          `/shops?page=${nextPage}&limit=${this.limit}&search=${encodeURIComponent(search)}&district=${encodeURIComponent(district)}&town=${encodeURIComponent(town)}&invalidOnly=${invalidOnly}`
         );
         this.page = nextPage;
         this.shops = append ? [...this.shops, ...data.items] : data.items;
@@ -38,9 +38,9 @@ export const useBackofficeStore = defineStore('backoffice', {
       await this.api(`/shops/${shopId}`, { method: 'PUT', body: payload });
       await this.fetchShops();
     },
-    async deleteShop(shopId: string, search = '', district = '', town = '') {
+    async deleteShop(shopId: string, search = '', district = '', town = '', invalidOnly = false) {
       await this.api(`/shops/${shopId}`, { method: 'DELETE' });
-      await this.fetchShops(search, district, town);
+      await this.fetchShops(search, district, town, invalidOnly);
     }
   }
 });
