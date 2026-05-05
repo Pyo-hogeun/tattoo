@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import shopRoutes from './routes/shopRoutes.js';
+import browShapeRoutes from './routes/browShapeRoutes.js';
 import { env } from './config/env.js';
 
 export const createApp = () => {
@@ -20,6 +21,7 @@ export const createApp = () => {
   });
 
   app.use('/api/shops', shopRoutes);
+  app.use('/api/brow-shapes', browShapeRoutes);
 
   app.use((err, _req, res, _next) => {
     console.error(err);
