@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
 import type { Shop } from '~/types/shop';
+import type { BrowShape } from '~/types/browShape';
 
 export const useBackofficeStore = defineStore('backoffice', {
   state: () => ({
     shops: [] as Shop[],
+    browShapes: [] as BrowShape[],
     total: 0,
     page: 1,
     limit: 20,
@@ -41,6 +43,22 @@ export const useBackofficeStore = defineStore('backoffice', {
     async deleteShop(shopId: string, search = '', district = '', invalidOnly = false, validOnly = false) {
       await this.api(`/shops/${shopId}`, { method: 'DELETE' });
       await this.fetchShops(search, district, invalidOnly, validOnly);
+    },
+    async fetchBrowShapes() {
+      const data: any = await this.api('/brow-shapes');
+      this.browShapes = data.items;
+    },
+    async createBrowShape(payload: Partial<BrowShape>) {
+      await this.api('/brow-shapes', { method: 'POST', body: payload });
+      await this.fetchBrowShapes();
+    },
+    async updateBrowShape(id: string, payload: Partial<BrowShape>) {
+      await this.api(`/brow-shapes/${id}`, { method: 'PUT', body: payload });
+      await this.fetchBrowShapes();
+    },
+    async deleteBrowShape(id: string) {
+      await this.api(`/brow-shapes/${id}`, { method: 'DELETE' });
+      await this.fetchBrowShapes();
     }
   }
 });

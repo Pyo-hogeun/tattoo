@@ -8,6 +8,9 @@
       <NuxtLink to="/shops/manage" class="block rounded px-3 py-2 hover:bg-slate-100" active-class="bg-slate-900 text-white">
         신규입력 / 수정
       </NuxtLink>
+      <NuxtLink to="/brow-shapes/manage" class="block rounded px-3 py-2 hover:bg-slate-100" active-class="bg-slate-900 text-white">
+        눈썹형태 관리
+      </NuxtLink>
     </nav>
   </aside>
 </template>
