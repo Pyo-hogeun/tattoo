@@ -25,7 +25,7 @@ export const createApp = () => {
     res.json({ ok: true, time: new Date().toISOString() });
   });
 
-  app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+  app.use('/api/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
   app.use('/api/shops', shopRoutes);
   app.use('/api/brow-shapes', browShapeRoutes);
