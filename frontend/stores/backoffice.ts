@@ -48,11 +48,11 @@ export const useBackofficeStore = defineStore('backoffice', {
       const data: any = await this.api('/brow-shapes');
       this.browShapes = data.items;
     },
-    async createBrowShape(payload: Partial<BrowShape>) {
+    async createBrowShape(payload: Partial<BrowShape> | FormData) {
       await this.api('/brow-shapes', { method: 'POST', body: payload });
       await this.fetchBrowShapes();
     },
-    async updateBrowShape(id: string, payload: Partial<BrowShape>) {
+    async updateBrowShape(id: string, payload: Partial<BrowShape> | FormData) {
       await this.api(`/brow-shapes/${id}`, { method: 'PUT', body: payload });
       await this.fetchBrowShapes();
     },

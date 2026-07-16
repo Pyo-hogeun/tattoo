@@ -1,21 +1,7 @@
-import fs from 'fs/promises';
-import path from 'path';
 import crypto from 'crypto';
-import { fileURLToPath } from 'url';
 import { BrowShape } from '../models/BrowShape.js';
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { r2 } from "../config/r2.js";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadDir = path.resolve(__dirname, '../../uploads/brow-shapes');
-
-const parseDataUrl = (dataUrl = '') => {
-  const matched = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
-  if (!matched) return null;
-  return { mime: matched[1], base64: matched[2] };
-};
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { r2 } from '../config/r2.js';
 
 const mimeExtMap = {
   'image/jpeg': 'jpg',
@@ -24,46 +10,39 @@ const mimeExtMap = {
   'image/gif': 'gif'
 };
 
-const saveBase64ImageIfNeeded = async (payload = {}) => {
+const normalizePayload = (payload = {}) => ({
+  name: payload.name,
+  imageUrl: payload.imageUrl,
+  description: payload.description,
+  isActive: payload.isActive === 'false' ? false : Boolean(payload.isActive ?? true)
+});
 
-  if (!payload.imageBase64) return payload;
+const saveMultipartImageIfNeeded = async (req) => {
+  const payload = normalizePayload(req.body);
+  const file = req.file;
 
-  const parsed = parseDataUrl(payload.imageBase64);
+  if (!file) return payload;
 
-  if (!parsed || !mimeExtMap[parsed.mime]) {
-    throw new Error("지원되지 않는 이미지 형식입니다.");
+  if (!mimeExtMap[file.mimetype]) {
+    throw new Error('지원되지 않는 이미지 형식입니다.');
   }
 
-  const extension = mimeExtMap[parsed.mime];
-
-  const filename =
-    `brow-shapes/${Date.now()}-${crypto.randomUUID()}.${extension}`;
-
-  const buffer = Buffer.from(parsed.base64, "base64");
+  const extension = mimeExtMap[file.mimetype];
+  const filename = `brow-shapes/${Date.now()}-${crypto.randomUUID()}.${extension}`;
 
   await r2.send(
     new PutObjectCommand({
       Bucket: process.env.R2_BUCKET,
-
       Key: filename,
-
-      Body: buffer,
-
-      ContentType: parsed.mime
+      Body: file.buffer,
+      ContentType: file.mimetype
     })
   );
 
-  const imageUrl =
-    `${process.env.R2_PUBLIC_URL}/${filename}`;
-
-  const next = {
+  return {
     ...payload,
-    imageUrl
+    imageUrl: `${process.env.R2_PUBLIC_URL}/${filename}`
   };
-
-  delete next.imageBase64;
-
-  return next;
 };
 
 export const listBrowShapes = async (_req, res, next) => {
@@ -77,7 +56,7 @@ export const listBrowShapes = async (_req, res, next) => {
 
 export const createBrowShape = async (req, res, next) => {
   try {
-    const payload = await saveBase64ImageIfNeeded(req.body);
+    const payload = await saveMultipartImageIfNeeded(req);
     const created = await BrowShape.create(payload);
     res.status(201).json(created);
   } catch (error) {
@@ -87,7 +66,7 @@ export const createBrowShape = async (req, res, next) => {
 
 export const updateBrowShape = async (req, res, next) => {
   try {
-    const payload = await saveBase64ImageIfNeeded(req.body);
+    const payload = await saveMultipartImageIfNeeded(req);
     const updated = await BrowShape.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true });
     if (!updated) return res.status(404).json({ message: 'Brow shape not found' });
     res.json(updated);
