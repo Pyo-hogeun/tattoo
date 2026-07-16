@@ -6,31 +6,37 @@ import { useBackofficeStore } from '~/stores/backoffice';
 const store = useBackofficeStore();
 const config = useRuntimeConfig();
 const editingId = ref<string | null>(null);
-const formDefault = { name: '', imageUrl: '', imageBase64: '', description: '', isActive: true };
+const formDefault = { name: '', imageUrl: '', description: '', isActive: true };
 const form = reactive({ ...formDefault });
+const imageFile = ref<File | null>(null);
+const imagePreviewUrl = ref('');
 const isEditing = computed(() => Boolean(editingId.value));
-const previewImage = computed(() => form.imageBase64 || resolveImageUrl(form.imageUrl));
+const previewImage = computed(() => imagePreviewUrl.value || resolveImageUrl(form.imageUrl));
 const resolveImageUrl = (url: string) => (url?.startsWith('/uploads') ? `${config.public.apiBase}${url}` : url);
 
 const resetForm = () => {
   Object.assign(form, formDefault);
+  imageFile.value = null;
+  imagePreviewUrl.value = '';
   editingId.value = null;
 };
 
-const onImageFileChange = async (event: Event) => {
+const onImageFileChange = (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    form.imageBase64 = String(reader.result || '');
-    form.imageUrl = '';
-  };
-  reader.readAsDataURL(file);
+  imageFile.value = file;
+  imagePreviewUrl.value = URL.createObjectURL(file);
+  form.imageUrl = '';
 };
 
 const submit = async () => {
-  if (!form.name.trim() || (!form.imageUrl.trim() && !form.imageBase64.trim())) return;
-  const payload = { name: form.name, imageUrl: form.imageUrl, imageBase64: form.imageBase64, description: form.description, isActive: form.isActive };
+  if (!form.name.trim() || (!form.imageUrl.trim() && !imageFile.value)) return;
+  const payload = new FormData();
+  payload.append('name', form.name);
+  payload.append('imageUrl', form.imageUrl);
+  payload.append('description', form.description);
+  payload.append('isActive', String(form.isActive));
+  if (imageFile.value) payload.append('image', imageFile.value);
   if (editingId.value) await store.updateBrowShape(editingId.value, payload);
   else await store.createBrowShape(payload);
   resetForm();
@@ -38,7 +44,9 @@ const submit = async () => {
 
 const editItem = (item: any) => {
   editingId.value = item._id;
-  Object.assign(form, { name: item.name, imageUrl: item.imageUrl, imageBase64: '', description: item.description || '', isActive: item.isActive ?? true });
+  imageFile.value = null;
+  imagePreviewUrl.value = '';
+  Object.assign(form, { name: item.name, imageUrl: item.imageUrl, description: item.description || '', isActive: item.isActive ?? true });
 };
 
 onMounted(() => {
