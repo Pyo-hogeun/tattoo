@@ -9,7 +9,7 @@ const editingId = ref<string | null>(null);
 const formDefault = { name: '', imageUrl: '', imageBase64: '', description: '', isActive: true };
 const form = reactive({ ...formDefault });
 const isEditing = computed(() => Boolean(editingId.value));
-const previewImage = computed(() => form.imageBase64 || form.imageUrl);
+const previewImage = computed(() => form.imageBase64 || resolveImageUrl(form.imageUrl));
 const resolveImageUrl = (url: string) => (url?.startsWith('/uploads') ? `${config.public.apiBase}${url}` : url);
 
 const resetForm = () => {

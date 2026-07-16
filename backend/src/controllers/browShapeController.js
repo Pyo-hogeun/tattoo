@@ -3,6 +3,9 @@ import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { BrowShape } from '../models/BrowShape.js';
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { r2 } from "../config/r2.js";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,19 +25,44 @@ const mimeExtMap = {
 };
 
 const saveBase64ImageIfNeeded = async (payload = {}) => {
+
   if (!payload.imageBase64) return payload;
+
   const parsed = parseDataUrl(payload.imageBase64);
+
   if (!parsed || !mimeExtMap[parsed.mime]) {
-    throw new Error('지원되지 않는 이미지 형식입니다. (jpg, png, webp, gif)');
+    throw new Error("지원되지 않는 이미지 형식입니다.");
   }
 
-  await fs.mkdir(uploadDir, { recursive: true });
-  const filename = `${Date.now()}-${crypto.randomUUID()}.${mimeExtMap[parsed.mime]}`;
-  const absolutePath = path.join(uploadDir, filename);
-  await fs.writeFile(absolutePath, Buffer.from(parsed.base64, 'base64'));
+  const extension = mimeExtMap[parsed.mime];
 
-  const next = { ...payload, imageUrl: `/uploads/brow-shapes/${filename}` };
+  const filename =
+    `brow-shapes/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+  const buffer = Buffer.from(parsed.base64, "base64");
+
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET,
+
+      Key: filename,
+
+      Body: buffer,
+
+      ContentType: parsed.mime
+    })
+  );
+
+  const imageUrl =
+    `${process.env.R2_PUBLIC_URL}/${filename}`;
+
+  const next = {
+    ...payload,
+    imageUrl
+  };
+
   delete next.imageBase64;
+
   return next;
 };
 
