@@ -1,9 +1,0 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer components {
-  .btn-primary { @apply rounded-lg bg-stone-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50; }
-  .label { @apply mb-1 block text-sm font-medium; }
-  .input { @apply w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none ring-0 transition focus:border-stone-900; }
-}
