@@ -32,11 +32,15 @@ npm run dev
 ```
 
 ### Backend 주요 API
+- `GET /api-docs` Swagger UI API 문서
+- `GET /api-docs/openapi.json` OpenAPI 3.0 명세(JSON)
 - `GET /health`
 - `GET /api/shops` 매장 목록 조회
 - `POST /api/shops` 매장 수동 등록
 - `PUT /api/shops/:id` 매장 수정
 - `DELETE /api/shops/:id` 매장 삭제
+
+Swagger 명세는 `backend/src/config/openapi.js`에서 관리합니다. API를 추가하거나 요청/응답 형식을 변경할 때 이 파일의 경로와 스키마도 함께 갱신하세요.
 
 ## 2) 수동 수집 중심 스키마
 `Shop` 문서에 수동 관리용 필드를 추가했습니다.
