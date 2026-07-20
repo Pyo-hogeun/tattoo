@@ -1,21 +1,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-interface BrowShapeResponse {
-  id?: string | number
-  name?: string
-  title?: string
-  image?: string
-  imageUrl?: string
-  image_url?: string
-  imagePath?: string
-  image_path?: string
+interface BrowShape {
+  _id: string
+  name: string
+  imageUrl: string
+  description: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
 }
 
-interface BrowShape {
-  id: string | number
-  name: string
-  imagePath: string
+interface BrowShapesResponse {
+  items: BrowShape[]
+  total: number
 }
 
 const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL ?? 'http://localhost:4000').replace(/\/$/, '')
@@ -25,29 +23,11 @@ const isLoading = ref(true)
 const errorMessage = ref('')
 const itemCount = computed(() => browShapes.value.length)
 
-function getImageUrl(imagePath: string) {
-  if (/^https?:\/\//i.test(imagePath) || imagePath.startsWith('data:')) return imagePath
+function getImageUrl(imageUrl: string) {
+  if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith('data:')) return imageUrl
 
-  const path = imagePath.replace(/^\//, '')
+  const path = imageUrl.replace(/^\//, '')
   return `${imageBaseUrl}/${path}`
-}
-
-function normalizeResponse(payload: unknown): BrowShape[] {
-  const records = Array.isArray(payload)
-    ? payload
-    : payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown }).data)
-      ? (payload as { data: unknown[] }).data
-      : []
-
-  return records.flatMap((record, index) => {
-    if (!record || typeof record !== 'object') return []
-
-    const shape = record as BrowShapeResponse
-    const imagePath = shape.image ?? shape.imageUrl ?? shape.image_url ?? shape.imagePath ?? shape.image_path
-    if (!imagePath) return []
-
-    return [{ id: shape.id ?? index, name: shape.name ?? shape.title ?? `Brow shape ${index + 1}`, imagePath }]
-  })
 }
 
 async function loadBrowShapes() {
@@ -57,7 +37,8 @@ async function loadBrowShapes() {
   try {
     const response = await fetch(BROW_SHAPES_API_URL)
     if (!response.ok) throw new Error(`Request failed: ${response.status}`)
-    browShapes.value = normalizeResponse(await response.json())
+    const payload = await response.json() as BrowShapesResponse
+    browShapes.value = payload.items
   } catch {
     errorMessage.value = 'Unable to load brow shapes. Please try again.'
   } finally {
@@ -85,9 +66,9 @@ onMounted(loadBrowShapes)
       <button type="button" class="text-button" @click="loadBrowShapes">Try again</button>
     </div>
     <div v-else-if="itemCount" class="gallery-grid">
-      <article v-for="(shape, index) in browShapes" :key="shape.id" class="tattoo-card">
+      <article v-for="(shape, index) in browShapes" :key="shape._id" class="tattoo-card">
         <span class="card-no">{{ String(index + 1).padStart(2, '0') }} / {{ String(itemCount).padStart(2, '0') }}</span>
-        <img :src="getImageUrl(shape.imagePath)" :alt="shape.name" class="gallery-image">
+        <img :src="getImageUrl(shape.imageUrl)" :alt="shape.name" class="gallery-image">
         <div class="card-footer"><span>{{ shape.name }}</span></div>
       </article>
     </div>
