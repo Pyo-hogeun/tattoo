@@ -16,7 +16,7 @@ export const createApp = () => {
 
   app.use(
     cors({
-      origin: env.frontendOrigin
+      origin: [env.frontendOrigin, env.frontendOriginUser].filter(Boolean)
     })
   );
   app.use(express.json({ limit: '2mb' }));
