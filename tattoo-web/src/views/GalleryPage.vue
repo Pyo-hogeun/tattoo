@@ -18,8 +18,8 @@ interface BrowShape {
   imagePath: string
 }
 
-const BROW_SHAPES_API_URL = 'http://localhost:4000/api/brow-shapes'
-const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL ?? ''
+const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL ?? 'http://localhost:4000').replace(/\/$/, '')
+const BROW_SHAPES_API_URL = `${imageBaseUrl}/api/brow-shapes`
 const browShapes = ref<BrowShape[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
@@ -28,9 +28,8 @@ const itemCount = computed(() => browShapes.value.length)
 function getImageUrl(imagePath: string) {
   if (/^https?:\/\//i.test(imagePath) || imagePath.startsWith('data:')) return imagePath
 
-  const base = imageBaseUrl.replace(/\/$/, '')
   const path = imagePath.replace(/^\//, '')
-  return base ? `${base}/${path}` : `/${path}`
+  return `${imageBaseUrl}/${path}`
 }
 
 function normalizeResponse(payload: unknown): BrowShape[] {
