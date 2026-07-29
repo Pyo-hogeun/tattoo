@@ -8,6 +8,7 @@ const startKakao = () => {
   if (!form.shopName.trim() || !form.address.trim() || !form.phone.trim()) { error.value = '모든 항목을 입력해 주세요.'; return; }
   if (!config.public.kakaoClientId) { error.value = '카카오 REST API 키가 설정되지 않았습니다.'; return; }
   sessionStorage.setItem('signup_shop', JSON.stringify(form));
+  sessionStorage.setItem('kakao_oauth_flow', 'signup');
   const query = new URLSearchParams({ client_id: String(config.public.kakaoClientId), redirect_uri: String(config.public.kakaoRedirectUri), response_type: 'code', state: crypto.randomUUID() });
   sessionStorage.setItem('kakao_oauth_state', query.get('state')!);
   location.href = `https://kauth.kakao.com/oauth/authorize?${query}`;
@@ -20,6 +21,7 @@ const startKakao = () => {
       <p class="text-sm font-semibold text-amber-600">TATTOO SHOP PARTNER</p>
       <h1 class="mt-2 text-3xl font-bold text-slate-900">매장 회원가입</h1>
       <p class="mt-2 text-sm text-slate-500">가입 후 manager 권한으로 내 매장의 갤러리를 관리할 수 있습니다.</p>
+      <NuxtLink to="/" class="mt-3 inline-block text-sm font-medium text-slate-600 underline">이미 가입했다면 로그인</NuxtLink>
       <form class="mt-8 space-y-5" @submit.prevent="startKakao">
         <label class="block"><span class="mb-1 block text-sm font-medium">매장명</span><input v-model="form.shopName" required class="w-full rounded-lg border p-3" placeholder="타투 매장명을 입력하세요" /></label>
         <label class="block"><span class="mb-1 block text-sm font-medium">주소</span><input v-model="form.address" required class="w-full rounded-lg border p-3" placeholder="매장 주소를 입력하세요" /></label>
