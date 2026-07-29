@@ -1,0 +1,13 @@
+<script setup lang="ts">
+import { onMounted, reactive, ref } from 'vue';
+const config = useRuntimeConfig();
+const items = ref<any[]>([]); const editingId = ref(''); const message = ref('');
+const form = reactive({ title: '', imageUrl: '', description: '' });
+const api = (path: string, options: any = {}) => $fetch(`${config.public.apiBase}${path}`, { ...options, headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } });
+const load = async () => { const data: any = await api('/gallery/mine'); items.value = data.items; };
+const save = async () => { await api(editingId.value ? `/gallery/${editingId.value}` : '/gallery', { method: editingId.value ? 'PUT' : 'POST', body: form }); Object.assign(form, { title: '', imageUrl: '', description: '' }); editingId.value = ''; await load(); };
+const edit = (item: any) => { editingId.value = item._id; Object.assign(form, { title: item.title, imageUrl: item.imageUrl, description: item.description }); };
+const remove = async (id: string) => { await api(`/gallery/${id}`, { method: 'DELETE' }); await load(); };
+onMounted(() => load().catch(() => { message.value = '로그인하거나 manager 권한을 확인해 주세요.'; }));
+</script>
+<template><main class="mx-auto max-w-5xl p-6"><div class="mb-8 flex items-center justify-between"><div><p class="text-sm font-semibold text-amber-600">MANAGER</p><h1 class="text-3xl font-bold">내 매장 갤러리</h1></div><NuxtLink to="/" class="text-sm underline">홈</NuxtLink></div><p v-if="message" class="mb-5 rounded bg-red-50 p-3 text-red-700">{{ message }}</p><form class="mb-10 grid gap-3 rounded-xl border bg-white p-5 md:grid-cols-2" @submit.prevent="save"><input v-model="form.title" required class="rounded border p-3" placeholder="작품 제목" /><input v-model="form.imageUrl" required type="url" class="rounded border p-3" placeholder="이미지 URL" /><textarea v-model="form.description" class="rounded border p-3 md:col-span-2" placeholder="작품 설명" /><button class="w-fit rounded bg-slate-900 px-5 py-2 text-white">{{ editingId ? '수정 저장' : '사진 등록' }}</button></form><div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"><article v-for="item in items" :key="item._id" class="overflow-hidden rounded-xl border bg-white"><img :src="item.imageUrl" :alt="item.title" class="aspect-square w-full object-cover" /><div class="p-4"><h2 class="font-semibold">{{ item.title }}</h2><p class="mt-1 text-sm text-slate-500">{{ item.description }}</p><div class="mt-4 flex gap-2"><button class="rounded border px-3 py-1 text-sm" @click="edit(item)">편집</button><button class="rounded border border-red-200 px-3 py-1 text-sm text-red-600" @click="remove(item._id)">삭제</button></div></div></article></div></main></template>

@@ -5,6 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import shopRoutes from './routes/shopRoutes.js';
 import browShapeRoutes from './routes/browShapeRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import galleryRoutes from './routes/galleryRoutes.js';
 import { env } from './config/env.js';
 import { openapiDocument } from './config/openapi.js';
 
@@ -51,9 +53,13 @@ export const createApp = () => {
 
   app.use('/api/shops', shopRoutes);
   app.use('/api/brow-shapes', browShapeRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/gallery', galleryRoutes);
 
   app.use((err, _req, res, _next) => {
     console.error(err);
+    if (err?.code === 11000) return res.status(409).json({ message: '이미 등록된 정보입니다.', fields: Object.keys(err.keyPattern || {}) });
+    if (err?.name === 'ValidationError') return res.status(400).json({ message: err.message });
     res.status(500).json({ message: err.message || 'Internal server error' });
   });
 

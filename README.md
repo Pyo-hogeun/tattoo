@@ -56,3 +56,17 @@ Swagger 명세는 `backend/src/config/openapi.js`에서 관리합니다. API를 
 - 상단에 **수동 매장 등록/수정 폼**
 - 목록에서 **검색/수정/삭제**
 - 매장 상태(활성/비활성) 관리
+
+## 4) 카카오 회원가입 및 권한
+
+필수 환경 변수는 `JWT_SECRET`, `KAKAO_CLIENT_ID`, 프론트엔드의
+`NUXT_PUBLIC_KAKAO_CLIENT_ID`, `NUXT_PUBLIC_KAKAO_REDIRECT_URI`입니다. 카카오 개발자
+콘솔에도 동일한 Redirect URI를 등록해야 합니다.
+
+- `manager`: 카카오 가입 시 기본 권한. 본인이 등록한 갤러리 사진만 조회·등록·수정·삭제
+- `admin`: 전체 매장 목록 조회 및 매장 정보 수정
+- `master`: 전체 매장 관리 및 회원 권한 변경
+
+회원가입 화면은 `/signup`, manager 갤러리는 `/gallery/manage`에서 이용합니다.
+운영 환경에서는 최초 master 계정을 DB에서 지정한 뒤 `PATCH /api/auth/users/:id/role`로
+나머지 회원의 권한을 관리하세요.

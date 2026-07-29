@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { createGalleryImage, deleteGalleryImage, listMyGallery, updateGalleryImage } from '../controllers/galleryController.js';
+import { allowRoles, authenticate } from '../middleware/auth.js';
+const router = Router();
+router.use(authenticate, allowRoles('manager', 'master'));
+router.get('/mine', listMyGallery);
+router.post('/', createGalleryImage);
+router.put('/:id', updateGalleryImage);
+router.delete('/:id', deleteGalleryImage);
+export default router;

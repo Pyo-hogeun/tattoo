@@ -15,7 +15,11 @@ export const useBackofficeStore = defineStore('backoffice', {
   actions: {
     api(path: string, options?: any) {
       const config = useRuntimeConfig();
-      return $fetch(`${config.public.apiBase}${path}`, options);
+      const token = import.meta.client ? localStorage.getItem('auth_token') : null;
+      return $fetch(`${config.public.apiBase}${path}`, {
+        ...options,
+        headers: { ...(options?.headers || {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+      });
     },
     async fetchShops(search = '', district = '', invalidOnly = false, validOnly = false, append = false) {
       const nextPage = append ? this.page + 1 : 1;
