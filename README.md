@@ -63,6 +63,41 @@ Swagger 명세는 `backend/src/config/openapi.js`에서 관리합니다. API를 
 `NUXT_PUBLIC_KAKAO_CLIENT_ID`, `NUXT_PUBLIC_KAKAO_REDIRECT_URI`입니다. 카카오 개발자
 콘솔에도 동일한 Redirect URI를 등록해야 합니다.
 
+### 카카오 REST API 키 설정 방법
+
+1. [카카오 개발자 콘솔](https://developers.kakao.com/console/app)에 로그인하고 애플리케이션을 생성합니다.
+2. 애플리케이션의 **앱 키** 화면에서 **REST API 키**를 복사합니다. JavaScript 키가 아닙니다.
+3. **카카오 로그인**을 활성화하고 Redirect URI에
+   `http://localhost:3000/auth/kakao/callback`을 등록합니다. 운영 환경에서는 실제 HTTPS
+   도메인의 `/auth/kakao/callback`도 별도로 등록해야 합니다.
+4. 예제 파일을 복사하고, `your_kakao_rest_api_key`를 2번에서 복사한 같은 키로 교체합니다.
+
+```bash
+cp frontend/.env.example frontend/.env
+cp backend/.env.example backend/.env
+```
+
+프론트엔드 `frontend/.env`:
+
+```dotenv
+NUXT_PUBLIC_KAKAO_CLIENT_ID=발급받은_REST_API_키
+NUXT_PUBLIC_KAKAO_REDIRECT_URI=http://localhost:3000/auth/kakao/callback
+NUXT_PUBLIC_API_BASE=http://localhost:4000/api
+```
+
+백엔드 `backend/.env`:
+
+```dotenv
+KAKAO_CLIENT_ID=발급받은_동일한_REST_API_키
+KAKAO_CLIENT_SECRET=
+JWT_SECRET=충분히_긴_임의의_비밀문자열
+```
+
+Client Secret은 카카오 개발자 콘솔에서 별도로 활성화한 경우에만 입력합니다. `.env`를
+수정한 뒤에는 Nuxt와 Express 개발 서버를 모두 완전히 종료하고 다시 실행해야 합니다.
+`카카오 REST API 키가 설정되지 않았습니다.` 메시지는 브라우저에 전달되는
+`NUXT_PUBLIC_KAKAO_CLIENT_ID` 값이 비어 있을 때 표시됩니다.
+
 - `manager`: 카카오 가입 시 기본 권한. 본인이 등록한 갤러리 사진만 조회·등록·수정·삭제
 - `admin`: 전체 매장 목록 조회 및 매장 정보 수정
 - `master`: 전체 매장 관리 및 회원 권한 변경
