@@ -6,11 +6,25 @@ import { signToken } from '../utils/token.js';
 const getKakaoProfile = async ({ accessToken, code, redirectUri }) => {
   let token = accessToken;
   if (!token && code) {
-    const body = new URLSearchParams({ grant_type: 'authorization_code', client_id: env.kakaoClientId, redirect_uri: redirectUri, code });
+    if (!env.kakaoClientId) {
+      const error = new Error('백엔드의 KAKAO_CLIENT_ID가 설정되지 않았습니다. backend/.env를 확인하고 서버를 다시 시작해 주세요.');
+      error.statusCode = 503;
+      throw error;
+    }
+    if (redirectUri && redirectUri !== env.kakaoRedirectUri) {
+      const error = new Error('카카오 Redirect URI 설정이 프론트엔드와 백엔드에서 일치하지 않습니다.');
+      error.statusCode = 400;
+      throw error;
+    }
+    const body = new URLSearchParams({ grant_type: 'authorization_code', client_id: env.kakaoClientId, redirect_uri: env.kakaoRedirectUri, code });
     if (env.kakaoClientSecret) body.set('client_secret', env.kakaoClientSecret);
     const response = await fetch('https://kauth.kakao.com/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error_description || '카카오 토큰 발급에 실패했습니다.');
+    if (!response.ok) {
+      const error = new Error(`카카오 토큰 발급에 실패했습니다: ${data.error_description || data.error || 'unknown error'}`);
+      error.statusCode = 400;
+      throw error;
+    }
     token = data.access_token;
   }
   if (!token) throw new Error('카카오 인증 정보가 필요합니다.');

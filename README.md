@@ -89,6 +89,7 @@ NUXT_PUBLIC_API_BASE=http://localhost:4000/api
 
 ```dotenv
 KAKAO_CLIENT_ID=발급받은_동일한_REST_API_키
+KAKAO_REDIRECT_URI=http://localhost:3000/auth/kakao/callback
 KAKAO_CLIENT_SECRET=
 JWT_SECRET=충분히_긴_임의의_비밀문자열
 ```
@@ -97,6 +98,11 @@ Client Secret은 카카오 개발자 콘솔에서 별도로 활성화한 경우�
 수정한 뒤에는 Nuxt와 Express 개발 서버를 모두 완전히 종료하고 다시 실행해야 합니다.
 `카카오 REST API 키가 설정되지 않았습니다.` 메시지는 브라우저에 전달되는
 `NUXT_PUBLIC_KAKAO_CLIENT_ID` 값이 비어 있을 때 표시됩니다.
+
+카카오 동의 후 `Not exist client_id []`가 표시된다면 프론트엔드 키는 있으나 백엔드의
+`KAKAO_CLIENT_ID`가 비어 있다는 뜻입니다. `backend/.env`가 저장소 루트가 아닌
+`backend` 디렉터리 안에 있는지 확인하고 백엔드 서버를 재시작하세요. 백엔드의
+`KAKAO_REDIRECT_URI`도 프론트엔드 및 카카오 개발자 콘솔에 등록한 값과 정확히 같아야 합니다.
 
 - `manager`: 카카오 가입 시 기본 권한. 본인이 등록한 갤러리 사진만 조회·등록·수정·삭제
 - `admin`: 전체 매장 목록 조회 및 매장 정보 수정

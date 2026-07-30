@@ -60,7 +60,7 @@ export const createApp = () => {
     console.error(err);
     if (err?.code === 11000) return res.status(409).json({ message: '이미 등록된 정보입니다.', fields: Object.keys(err.keyPattern || {}) });
     if (err?.name === 'ValidationError') return res.status(400).json({ message: err.message });
-    res.status(500).json({ message: err.message || 'Internal server error' });
+    res.status(err?.statusCode || 500).json({ message: err.message || 'Internal server error' });
   });
 
   return app;
