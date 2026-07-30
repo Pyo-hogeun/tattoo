@@ -104,6 +104,18 @@ Client Secret은 카카오 개발자 콘솔에서 별도로 활성화한 경우�
 `backend` 디렉터리 안에 있는지 확인하고 백엔드 서버를 재시작하세요. 백엔드의
 `KAKAO_REDIRECT_URI`도 프론트엔드 및 카카오 개발자 콘솔에 등록한 값과 정확히 같아야 합니다.
 
+`Bad client credentials`가 표시되면 다음 두 항목을 확인하세요.
+
+1. `frontend/.env`의 `NUXT_PUBLIC_KAKAO_CLIENT_ID`와 `backend/.env`의
+   `KAKAO_CLIENT_ID`가 같은 애플리케이션의 **REST API 키**로 완전히 동일해야 합니다.
+2. 카카오 개발자 콘솔에서 Client Secret을 활성화하지 않았다면
+   `KAKAO_CLIENT_SECRET=`을 빈 값으로 둡니다. 활성화했다면 REST API 키나 Admin 키가
+   아니라 콘솔의 **Client Secret 코드**를 입력하고 활성화 상태가 `사용함`인지 확인합니다.
+
+환경 변수를 수정한 후에는 진행 중이던 카카오 동의 창을 닫고 프론트엔드와 백엔드 서버를
+모두 재시작한 다음 처음부터 다시 시도해야 합니다. 인가 코드는 일회용이므로 오류가 발생한
+콜백 페이지를 새로고침해서 재사용할 수 없습니다.
+
 - `manager`: 카카오 가입 시 기본 권한. 본인이 등록한 갤러리 사진만 조회·등록·수정·삭제
 - `admin`: 전체 매장 목록 조회 및 매장 정보 수정
 - `master`: 전체 매장 관리 및 회원 권한 변경

@@ -13,7 +13,12 @@ onMounted(async () => {
     if (flow === 'signup' && !saved) throw new Error('회원가입 정보가 만료되었습니다. 다시 입력해 주세요.');
     const data: any = await $fetch(`${config.public.apiBase}/auth/kakao/${flow}`, {
       method: 'POST',
-      body: { ...(saved ? JSON.parse(saved) : {}), code, redirectUri: config.public.kakaoRedirectUri }
+      body: {
+        ...(saved ? JSON.parse(saved) : {}),
+        code,
+        redirectUri: config.public.kakaoRedirectUri,
+        clientId: config.public.kakaoClientId
+      }
     });
     localStorage.setItem('auth_token', data.token);
     localStorage.setItem('auth_user', JSON.stringify(data.user));

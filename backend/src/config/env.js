@@ -13,7 +13,7 @@ export const env = {
   frontendOrigin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
   frontendOriginUser: process.env.FRONTEND_ORIGIN_USER,
   jwtSecret: process.env.JWT_SECRET || 'change-this-secret-in-production',
-  kakaoClientId: process.env.KAKAO_CLIENT_ID || '',
-  kakaoClientSecret: process.env.KAKAO_CLIENT_SECRET || '',
-  kakaoRedirectUri: process.env.KAKAO_REDIRECT_URI || 'http://localhost:3000/auth/kakao/callback'
+  kakaoClientId: process.env.KAKAO_CLIENT_ID?.trim() || '',
+  kakaoClientSecret: process.env.KAKAO_CLIENT_SECRET?.trim() || '',
+  kakaoRedirectUri: process.env.KAKAO_REDIRECT_URI?.trim() || 'http://localhost:3000/auth/kakao/callback'
 };

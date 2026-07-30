@@ -3,12 +3,17 @@ import { Shop } from '../models/Shop.js';
 import { User } from '../models/User.js';
 import { signToken } from '../utils/token.js';
 
-const getKakaoProfile = async ({ accessToken, code, redirectUri }) => {
+const getKakaoProfile = async ({ accessToken, code, redirectUri, clientId }) => {
   let token = accessToken;
   if (!token && code) {
     if (!env.kakaoClientId) {
       const error = new Error('백엔드의 KAKAO_CLIENT_ID가 설정되지 않았습니다. backend/.env를 확인하고 서버를 다시 시작해 주세요.');
       error.statusCode = 503;
+      throw error;
+    }
+    if (clientId && clientId !== env.kakaoClientId) {
+      const error = new Error('프론트엔드와 백엔드의 카카오 REST API 키가 서로 다릅니다. 두 .env 파일의 키를 동일하게 설정해 주세요.');
+      error.statusCode = 400;
       throw error;
     }
     if (redirectUri && redirectUri !== env.kakaoRedirectUri) {
@@ -21,7 +26,11 @@ const getKakaoProfile = async ({ accessToken, code, redirectUri }) => {
     const response = await fetch('https://kauth.kakao.com/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
     const data = await response.json();
     if (!response.ok) {
-      const error = new Error(`카카오 토큰 발급에 실패했습니다: ${data.error_description || data.error || 'unknown error'}`);
+      const isBadCredentials = data.error_description === 'Bad client credentials';
+      const message = isBadCredentials
+        ? '카카오 앱 인증 정보가 올바르지 않습니다. REST API 키가 같은 앱의 키인지 확인하고, Client Secret을 활성화하지 않았다면 backend/.env의 KAKAO_CLIENT_SECRET을 비워 주세요. 활성화했다면 카카오 콘솔의 Client Secret 코드와 정확히 일치시켜 주세요.'
+        : `카카오 토큰 발급에 실패했습니다: ${data.error_description || data.error || 'unknown error'}`;
+      const error = new Error(message);
       error.statusCode = 400;
       throw error;
     }
