@@ -123,3 +123,8 @@ Client Secret은 카카오 개발자 콘솔에서 별도로 활성화한 경우�
 회원가입 화면은 `/signup`, manager 갤러리는 `/gallery/manage`에서 이용합니다.
 운영 환경에서는 최초 master 계정을 DB에서 지정한 뒤 `PATCH /api/auth/users/:id/role`로
 나머지 회원의 권한을 관리하세요.
+
+manager가 갤러리에서 업로드한 JPG, PNG, WEBP, GIF 파일은 백엔드 서버의
+`backend/uploads/gallery`에 저장되고 `/api/uploads/gallery/...` 경로로 제공됩니다. 파일당
+최대 크기는 10MB입니다. 컨테이너 환경에 배포할 때는 업로드 디렉터리에 영구 볼륨을
+연결해야 재배포 후에도 이미지가 유지됩니다.

@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { createGalleryImage, deleteGalleryImage, listMyGallery, updateGalleryImage } from '../controllers/galleryController.js';
 import { allowRoles, authenticate } from '../middleware/auth.js';
+import { multipartFormData } from '../middleware/multipart.js';
 const router = Router();
 router.use(authenticate, allowRoles('manager', 'master'));
 router.get('/mine', listMyGallery);
-router.post('/', createGalleryImage);
-router.put('/:id', updateGalleryImage);
+router.post('/', multipartFormData, createGalleryImage);
+router.put('/:id', multipartFormData, updateGalleryImage);
 router.delete('/:id', deleteGalleryImage);
 export default router;

@@ -44,7 +44,10 @@ node_modules/
 
 # Coverage
 coverage/
-*.lcov
+# Runtime gallery uploads
+backend/uploads/gallery/
+
+.pnp.*
 .nyc_output
 
 # Build output
