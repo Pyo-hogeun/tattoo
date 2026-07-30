@@ -124,7 +124,8 @@ Client Secret은 카카오 개발자 콘솔에서 별도로 활성화한 경우�
 운영 환경에서는 최초 master 계정을 DB에서 지정한 뒤 `PATCH /api/auth/users/:id/role`로
 나머지 회원의 권한을 관리하세요.
 
-manager가 갤러리에서 업로드한 JPG, PNG, WEBP, GIF 파일은 백엔드 서버의
-`backend/uploads/gallery`에 저장되고 `/api/uploads/gallery/...` 경로로 제공됩니다. 파일당
-최대 크기는 10MB입니다. 컨테이너 환경에 배포할 때는 업로드 디렉터리에 영구 볼륨을
-연결해야 재배포 후에도 이미지가 유지됩니다.
+manager가 갤러리에서 업로드한 JPG, PNG, WEBP, GIF 파일은 `/brow-shapes/manage`의 이미지와
+동일한 Cloudflare R2 버킷에 `gallery/...` 키로 저장됩니다. 파일당 최대 크기는 10MB입니다.
+백엔드 `.env`에 `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`, `R2_BUCKET`,
+`R2_PUBLIC_URL`을 설정해야 하며, `R2_PUBLIC_URL`은 브라우저에서 이미지를 읽을 수 있는
+R2 공개 도메인 또는 연결한 사용자 지정 도메인이어야 합니다.

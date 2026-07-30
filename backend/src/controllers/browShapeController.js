@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { BrowShape } from '../models/BrowShape.js';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { r2 } from '../config/r2.js';
+import { env } from '../config/env.js';
 
 const mimeExtMap = {
   'image/jpeg': 'jpg',
@@ -32,7 +33,7 @@ const saveMultipartImageIfNeeded = async (req) => {
 
   await r2.send(
     new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET,
+      Bucket: env.r2Bucket,
       Key: filename,
       Body: file.buffer,
       ContentType: file.mimetype
@@ -41,7 +42,7 @@ const saveMultipartImageIfNeeded = async (req) => {
 
   return {
     ...payload,
-    imageUrl: `${process.env.R2_PUBLIC_URL}/${filename}`
+    imageUrl: `${env.r2PublicUrl}/${filename}`
   };
 };
 

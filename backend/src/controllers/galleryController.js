@@ -1,11 +1,10 @@
 import crypto from 'crypto';
 import path from 'path';
-import { mkdir, unlink, writeFile } from 'fs/promises';
-import { fileURLToPath } from 'url';
+import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { GalleryImage } from '../models/GalleryImage.js';
+import { r2 } from '../config/r2.js';
+import { env } from '../config/env.js';
 
-const controllerDirectory = path.dirname(fileURLToPath(import.meta.url));
-const galleryUploadDirectory = path.resolve(controllerDirectory, '../../uploads/gallery');
 const allowedImageTypes = new Map([
   ['image/jpeg', 'jpg'],
   ['image/png', 'png'],
@@ -29,17 +28,22 @@ const saveGalleryFile = async (file) => {
   if (!extension) throw httpError(400, 'JPG, PNG, WEBP, GIF 이미지만 등록할 수 있습니다.');
   if (!file.size) throw httpError(400, '비어 있는 파일은 등록할 수 없습니다.');
 
-  await mkdir(galleryUploadDirectory, { recursive: true });
-  const imageKey = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
-  await writeFile(path.join(galleryUploadDirectory, imageKey), file.buffer, { flag: 'wx' });
-  return { imageKey, imageUrl: `/api/uploads/gallery/${imageKey}` };
+  if (![env.r2Endpoint, env.r2AccessKey, env.r2SecretKey, env.r2Bucket, env.r2PublicUrl].every(Boolean)) {
+    throw httpError(503, '갤러리 업로드에 필요한 Cloudflare R2 환경 변수가 설정되지 않았습니다.');
+  }
+  const imageKey = `gallery/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+  await r2.send(new PutObjectCommand({
+    Bucket: env.r2Bucket,
+    Key: imageKey,
+    Body: file.buffer,
+    ContentType: file.mimetype
+  }));
+  return { imageKey, imageUrl: `${env.r2PublicUrl}/${imageKey}` };
 };
 
 const removeGalleryFile = async (imageKey) => {
-  if (!imageKey || path.basename(imageKey) !== imageKey) return;
-  await unlink(path.join(galleryUploadDirectory, imageKey)).catch((error) => {
-    if (error.code !== 'ENOENT') throw error;
-  });
+  if (!imageKey || path.posix.normalize(imageKey) !== imageKey || !imageKey.startsWith('gallery/')) return;
+  await r2.send(new DeleteObjectCommand({ Bucket: env.r2Bucket, Key: imageKey }));
 };
 
 export const listMyGallery = async (req, res, next) => {

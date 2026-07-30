@@ -44,9 +44,6 @@ node_modules/
 
 # Coverage
 coverage/
-# Runtime gallery uploads
-backend/uploads/gallery/
-
 .pnp.*
 .nyc_output
 
