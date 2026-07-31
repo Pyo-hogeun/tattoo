@@ -7,17 +7,6 @@ interface GalleryItem {
   imageUrl: string
 }
 
-interface BrowShape {
-  _id: string
-  name: string
-  imageUrl: string
-}
-
-interface BrowShapesResponse {
-  items: BrowShape[]
-  total: number
-}
-
 interface GalleryApiItem {
   key: string
   url: string
@@ -32,7 +21,6 @@ interface GalleryResponse {
 }
 
 const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL ?? 'http://localhost:4000').replace(/\/$/, '')
-const BROW_SHAPES_API_URL = `${imageBaseUrl}/api/brow-shapes`
 const GALLERY_API_URL = `${imageBaseUrl}/gallery`
 const galleryItems = ref<GalleryItem[]>([])
 const isLoading = ref(true)
@@ -55,30 +43,15 @@ async function loadGalleryImages() {
   errorMessage.value = ''
 
   try {
-    const responses = await Promise.all([
-      fetch(BROW_SHAPES_API_URL),
-      fetch(GALLERY_API_URL),
-    ])
+    const response = await fetch(GALLERY_API_URL)
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`)
 
-    const failedResponse = responses.find(response => !response.ok)
-    if (failedResponse) throw new Error(`Request failed: ${failedResponse.status}`)
-
-    const [browShapesPayload, galleryPayload] = await Promise.all([
-      responses[0].json() as Promise<BrowShapesResponse>,
-      responses[1].json() as Promise<GalleryResponse>,
-    ])
-    galleryItems.value = [
-      ...browShapesPayload.items.map(item => ({
-        _id: `brow-shape-${item._id}`,
-        name: item.name,
-        imageUrl: item.imageUrl,
-      })),
-      ...galleryPayload.items.map(item => ({
-        _id: `gallery-${item.key}`,
-        name: getGalleryItemName(item.key),
-        imageUrl: item.url,
-      })),
-    ]
+    const payload = await response.json() as GalleryResponse
+    galleryItems.value = payload.items.map(item => ({
+      _id: `gallery-${item.key}`,
+      name: getGalleryItemName(item.key),
+      imageUrl: item.url,
+    }))
   } catch {
     errorMessage.value = 'Unable to load gallery images. Please try again.'
   } finally {
