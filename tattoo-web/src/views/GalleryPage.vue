@@ -16,9 +16,9 @@ interface GalleryResponse {
   total: number
 }
 
-const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL ?? 'http://localhost:4000').replace(/\/$/, '')
-const BROW_SHAPES_API_URL = `${imageBaseUrl}/api/brow-shapes`
-const GALLERY_API_URL = `${imageBaseUrl}/api/gallery`
+const r2PublicUrl = import.meta.env.R2_PUBLIC_URL.replace(/\/$/, '')
+const BROW_SHAPES_API_URL = `${r2PublicUrl}/api/brow-shapes`
+const GALLERY_API_URL = `${r2PublicUrl}/api/gallery`
 const galleryItems = ref<GalleryItem[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
@@ -28,7 +28,7 @@ function getImageUrl(imageUrl: string) {
   if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith('data:')) return imageUrl
 
   const path = imageUrl.replace(/^\//, '')
-  return `${imageBaseUrl}/${path}`
+  return `${r2PublicUrl}/${path}`
 }
 
 async function loadGalleryImages() {
