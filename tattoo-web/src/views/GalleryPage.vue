@@ -7,20 +7,28 @@ interface GalleryItem {
   imageUrl: string
 }
 
-interface GalleryRecord {
-  _id?: string
-  id?: string | number
-  key?: string
-  name?: string
-  title?: string
-  fileName?: string
-  imageUrl?: string
-  image_url?: string
-  url?: string
-  src?: string
-  path?: string
-  imagePath?: string
-  image_path?: string
+interface BrowShape {
+  _id: string
+  name: string
+  imageUrl: string
+}
+
+interface BrowShapesResponse {
+  items: BrowShape[]
+  total: number
+}
+
+interface GalleryApiItem {
+  key: string
+  url: string
+  size: number
+  lastModified: string
+  etag: string
+}
+
+interface GalleryResponse {
+  items: GalleryApiItem[]
+  total: number
 }
 
 const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL ?? 'http://localhost:4000').replace(/\/$/, '')
@@ -38,41 +46,8 @@ function getImageUrl(imageUrl: string) {
   return `${imageBaseUrl}/${path}`
 }
 
-function getResponseRecords(payload: unknown): unknown[] {
-  if (Array.isArray(payload)) return payload
-  if (!payload || typeof payload !== 'object') return []
-
-  const response = payload as Record<string, unknown>
-  for (const key of ['items', 'images', 'files', 'data', 'results']) {
-    const value = response[key]
-    if (Array.isArray(value)) return value
-    if (value && typeof value === 'object') {
-      const nestedRecords = getResponseRecords(value)
-      if (nestedRecords.length) return nestedRecords
-    }
-  }
-
-  return []
-}
-
-function normalizeGalleryResponse(payload: unknown, source: string): GalleryItem[] {
-  return getResponseRecords(payload).flatMap((record, index) => {
-    if (typeof record === 'string') {
-      return [{ _id: `${source}-${index}-${record}`, name: `Gallery image ${index + 1}`, imageUrl: record }]
-    }
-    if (!record || typeof record !== 'object') return []
-
-    const item = record as GalleryRecord
-    const imageUrl = item.imageUrl ?? item.image_url ?? item.url ?? item.src
-      ?? item.imagePath ?? item.image_path ?? item.path ?? item.key
-    if (!imageUrl) return []
-
-    return [{
-      _id: `${source}-${item._id ?? item.id ?? item.key ?? index}`,
-      name: item.name ?? item.title ?? item.fileName ?? item.key ?? `Gallery image ${index + 1}`,
-      imageUrl,
-    }]
-  })
+function getGalleryItemName(key: string) {
+  return key.split('/').pop() ?? key
 }
 
 async function loadGalleryImages() {
@@ -88,10 +63,21 @@ async function loadGalleryImages() {
     const failedResponse = responses.find(response => !response.ok)
     if (failedResponse) throw new Error(`Request failed: ${failedResponse.status}`)
 
-    const payloads = await Promise.all(responses.map(response => response.json() as Promise<unknown>))
+    const [browShapesPayload, galleryPayload] = await Promise.all([
+      responses[0].json() as Promise<BrowShapesResponse>,
+      responses[1].json() as Promise<GalleryResponse>,
+    ])
     galleryItems.value = [
-      ...normalizeGalleryResponse(payloads[0], 'brow-shape'),
-      ...normalizeGalleryResponse(payloads[1], 'gallery'),
+      ...browShapesPayload.items.map(item => ({
+        _id: `brow-shape-${item._id}`,
+        name: item.name,
+        imageUrl: item.imageUrl,
+      })),
+      ...galleryPayload.items.map(item => ({
+        _id: `gallery-${item.key}`,
+        name: getGalleryItemName(item.key),
+        imageUrl: item.url,
+      })),
     ]
   } catch {
     errorMessage.value = 'Unable to load gallery images. Please try again.'
