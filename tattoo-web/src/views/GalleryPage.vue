@@ -20,7 +20,7 @@ interface GalleryResponse {
   total: number
 }
 
-const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL ?? 'http://localhost:4000').replace(/\/$/, '')
+const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL ?? import.meta.env.API_BASE_URL).replace(/\/$/, '')
 const GALLERY_API_URL = `${imageBaseUrl}/gallery`
 const galleryItems = ref<GalleryItem[]>([])
 const isLoading = ref(true)
