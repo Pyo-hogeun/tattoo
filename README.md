@@ -36,6 +36,7 @@ npm run dev
 - `GET /api-docs/openapi.json` OpenAPI 3.0 명세(JSON)
 - `GET /health`
 - `GET /api/shops` 매장 목록 조회
+- `GET /api/gallery` R2 버킷의 `gallery/` 하위 이미지 전체 조회
 - `POST /api/shops` 매장 수동 등록
 - `PUT /api/shops/:id` 매장 수정
 - `DELETE /api/shops/:id` 매장 삭제
@@ -129,3 +130,6 @@ manager가 갤러리에서 업로드한 JPG, PNG, WEBP, GIF 파일은 `/brow-sha
 백엔드 `.env`에 `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`, `R2_BUCKET`,
 `R2_PUBLIC_URL`을 설정해야 하며, `R2_PUBLIC_URL`은 브라우저에서 이미지를 읽을 수 있는
 R2 공개 도메인 또는 연결한 사용자 지정 도메인이어야 합니다.
+
+`GET /api/gallery`는 인증 없이 사용할 수 있으며, R2의 페이지를 모두 순회하여 `gallery/`
+하위 파일의 공개 URL, 키, 크기, 최종 수정 시각, ETag를 최신순으로 반환합니다.

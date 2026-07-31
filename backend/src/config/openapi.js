@@ -62,7 +62,8 @@ export const openapiDocument = {
   tags: [
     { name: 'System', description: '서버 상태 확인' },
     { name: 'Shops', description: '매장 관리' },
-    { name: 'Brow shapes', description: '눈썹 형태 관리' }
+    { name: 'Brow shapes', description: '눈썹 형태 관리' },
+    { name: 'Gallery', description: 'R2 갤러리 이미지 조회' }
   ],
   paths: {
     '/health': {
@@ -114,6 +115,17 @@ export const openapiDocument = {
         responses: { 200: { description: '수정된 눈썹 형태', content: { 'application/json': { schema: { $ref: '#/components/schemas/BrowShape' } } } }, 404: errorResponse('눈썹 형태를 찾을 수 없음'), 500: errorResponse('서버 오류') }
       },
       delete: { tags: ['Brow shapes'], summary: '눈썹 형태 삭제', parameters: [idParameter], responses: { 204: { description: '삭제 완료' }, 404: errorResponse('눈썹 형태를 찾을 수 없음'), 500: errorResponse('서버 오류') } }
+    },
+    '/api/gallery': {
+      get: {
+        tags: ['Gallery'], summary: 'R2 갤러리 이미지 전체 조회',
+        description: 'Cloudflare R2 버킷의 gallery/ 접두사 아래에 있는 모든 파일을 최신 수정 순으로 반환합니다.',
+        responses: {
+          200: { description: '갤러리 이미지 목록', content: { 'application/json': { schema: { $ref: '#/components/schemas/R2GalleryList' } } } },
+          503: errorResponse('R2 환경 변수 미설정'),
+          500: errorResponse('서버 오류')
+        }
+      }
     }
   },
   components: {
@@ -126,7 +138,9 @@ export const openapiDocument = {
       BrowShape: { type: 'object', required: ['_id', 'name', 'imageUrl'], properties: browShapeProperties },
       BrowShapeInput: { type: 'object', required: ['name', 'imageUrl'], properties: browShapeProperties },
       BrowShapeMultipartInput: { type: 'object', required: ['name'], properties: { name: browShapeProperties.name, imageUrl: browShapeProperties.imageUrl, description: browShapeProperties.description, isActive: { type: 'boolean', default: true }, image: { type: 'string', format: 'binary', description: 'JPEG, PNG, WebP 또는 GIF (최대 10MB)' } } },
-      BrowShapeList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/BrowShape' } }, total: { type: 'integer' } } }
+      BrowShapeList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/BrowShape' } }, total: { type: 'integer' } } },
+      R2GalleryImage: { type: 'object', required: ['key', 'url', 'size'], properties: { key: { type: 'string', example: 'gallery/example.webp' }, url: { type: 'string', format: 'uri' }, size: { type: 'integer', minimum: 0, description: '파일 크기(byte)' }, lastModified: { type: 'string', format: 'date-time' }, etag: { type: 'string' } } },
+      R2GalleryList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/R2GalleryImage' } }, total: { type: 'integer' } } }
     }
   }
 };
