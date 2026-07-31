@@ -17,8 +17,8 @@ interface GalleryResponse {
 }
 
 const r2PublicUrl = import.meta.env.R2_PUBLIC_URL.replace(/\/$/, '')
-const BROW_SHAPES_API_URL = `${r2PublicUrl}/api/brow-shapes`
-const GALLERY_API_URL = `${r2PublicUrl}/api/gallery`
+const BROW_SHAPES_API_URL = `${r2PublicUrl}/brow-shapes`
+const GALLERY_API_URL = `${r2PublicUrl}/gallery`
 const galleryItems = ref<GalleryItem[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
