@@ -24,3 +24,67 @@ nav { display: flex; align-items: stretch; height: 88px; }
 .page-footer { display: flex; align-items: center; gap: 11px; color: #5e5c56; margin-top: 22px; }.page-footer span:last-child { margin-left: auto; }.scroll-line { width: 62px; height: 1px; background: #7a7871; }
 .content-page { min-height: calc(100svh - 88px); padding-top: 58px; }.content-page h1 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(52px, 7.4vw, 104px); line-height: .88; letter-spacing: -.065em; margin: 42px 0 0; }.profile-layout { display: grid; grid-template-columns: 1.35fr .65fr; gap: 48px; align-items: end; }.profile-copy { border-top: 1px solid #9d9a91; padding-top: 15px; color: #53514c; font-size: 15px; line-height: 1.6; }.profile-copy p:first-child { margin-top: 0; }.profile-copy a { color: #161615; display: inline-block; font-family: 'DM Mono', monospace; font-size: 11px; margin-top: 18px; }.page-title { margin-bottom: 45px !important; }.settings-list { border-top: 1px solid #9d9a91; }.setting-row { align-items: center; border-bottom: 1px solid #c8c6bf; display: flex; justify-content: space-between; min-height: 72px; font-size: 15px; }.text-button { color: #4f4d48; border: 0; background: transparent; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 11px; }.toggle { width: 40px; height: 22px; padding: 2px; border: 0; border-radius: 20px; background: #aaa79f; cursor: pointer; transition: background .2s ease; }.toggle i { display: block; width: 18px; height: 18px; border-radius: 50%; background: #ebe9e3; transition: transform .2s ease; }.toggle.on { background: #1f2623; }.toggle.on i { transform: translateX(18px); }
 @media (max-width: 700px) { .gnb { height: 71px; padding: 0 20px; }.brand svg { width: 24px; height: 24px; } nav { height: 71px; }.nav-item { min-width: 54px; }.nav-item span { display: none; }.nav-item::after { inset-inline: 17px; }.menu-button { width: 33px; height: 33px; }.container { padding: 25px 20px 20px; }.title-row { display: block; margin: 32px 0; }.title-row h1 { font-size: clamp(56px, 17vw, 92px); }.intro { margin: 25px 0 0; width: min(280px, 100%); }.gallery-grid { grid-template-columns: 1fr; gap: 10px; }.tattoo-card { height: 72vw; min-height: 265px; }.card-two { height: 58vw; }.flower { font-size: 150px; }.moth { font-size: 152px; }.page-footer { margin-top: 17px; }.content-page { min-height: calc(100svh - 71px); padding-top: 36px; }.profile-layout { display: block; }.content-page h1 { font-size: clamp(50px, 15vw, 74px); margin-top: 32px; }.profile-copy { margin-top: 40px; }.page-title { margin-bottom: 32px !important; } }
+
+/* Image-first brow inspiration gallery */
+.gallery-page { max-width: 1600px; margin: 0 auto; padding: 0 2.2vw 48px; }
+.gallery-hero { min-height: 310px; padding: 58px 2.1vw 48px; display: flex; align-items: flex-end; justify-content: space-between; gap: 48px; }
+.gallery-kicker { margin: 0 0 18px; display: flex; align-items: center; gap: 9px; color: #6d6a63; font: 10px/1 'DM Mono', monospace; letter-spacing: .09em; text-transform: uppercase; }
+.gallery-kicker span { width: 7px; height: 7px; border-radius: 50%; background: #e85836; }
+.gallery-hero h1 { margin: 0; color: #161615; font: 600 clamp(56px, 7.4vw, 112px)/.82 'Playfair Display', Georgia, serif; letter-spacing: -.07em; }
+.gallery-hero h1 em { color: #827d72; font-weight: 600; }
+.gallery-intro { max-width: 330px; margin: 0 1vw 8px 0; color: #66635d; font-size: 12px; line-height: 1.75; }
+.art-wall { columns: 4 260px; column-gap: 12px; }
+.brow-card { position: relative; width: 100%; margin: 0 0 12px; break-inside: avoid; overflow: hidden; border-radius: 2px; background: #d6d1c8; color: #fff; isolation: isolate; aspect-ratio: 4 / 5; }
+.brow-card--1, .brow-card--5 { aspect-ratio: 1 / 1; }
+.brow-card--2 { aspect-ratio: 4 / 6; }
+.brow-card--3 { aspect-ratio: 5 / 4; }
+.brow-card--6 { aspect-ratio: 3 / 4; }
+.brow-image { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .65s cubic-bezier(.2,.7,.2,1), filter .4s ease; }
+.brow-card:hover .brow-image { transform: scale(1.035); filter: saturate(.88); }
+.brow-card__shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(10,10,9,.2), transparent 33%, transparent 56%, rgba(10,10,9,.72)); pointer-events: none; }
+.brow-card__top { position: absolute; z-index: 2; inset: 14px 14px auto; display: flex; justify-content: space-between; align-items: center; }
+.brow-card__index { font: 9px/1 'DM Mono', monospace; letter-spacing: .08em; text-shadow: 0 1px 8px rgba(0,0,0,.35); }
+.save-button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.52); border-radius: 50%; color: #fff; background: rgba(20,20,18,.14); backdrop-filter: blur(8px); cursor: pointer; transition: background .2s, transform .2s; }
+.save-button:hover { background: rgba(20,20,18,.5); transform: translateY(-2px); }
+.save-button svg { width: 16px; height: 16px; }
+.brow-card__caption { position: absolute; z-index: 2; inset: auto 15px 15px; display: flex; align-items: center; gap: 10px; min-width: 0; text-shadow: 0 1px 9px rgba(0,0,0,.5); }
+.artist-avatar { flex: 0 0 30px; width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.7); border-radius: 50%; background: rgba(255,255,255,.16); backdrop-filter: blur(8px); font: 500 10px 'DM Mono', monospace; }
+.brow-card__caption div:last-child { min-width: 0; display: grid; gap: 3px; }
+.brow-card__caption strong { font-size: 11px; font-weight: 500; letter-spacing: .01em; }
+.brow-card__caption span { overflow: hidden; color: rgba(255,255,255,.76); font-size: 9px; text-overflow: ellipsis; text-transform: capitalize; white-space: nowrap; }
+.gallery-page .gallery-status { margin: 0 2.1vw; min-height: 360px; border-color: #c8c6bf; }
+.load-more { min-height: 132px; display: flex; justify-content: center; align-items: center; gap: 12px; color: #77746d; font: 9px/1 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
+.loading-mark { width: 18px; height: 18px; display: inline-block; border: 1px solid #aaa69d; border-right-color: #282724; border-radius: 50%; animation: gallery-spin .8s linear infinite; }
+.load-more .loading-mark:not(.spinning) { animation-play-state: paused; }
+@keyframes gallery-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 1000px) {
+  .gallery-page { padding-inline: 16px; }
+  .gallery-hero { min-height: 270px; padding-inline: 12px; }
+  .art-wall { columns: 3 220px; }
+}
+
+@media (max-width: 700px) {
+  .gallery-page { padding: 0 8px 28px; }
+  .gallery-hero { min-height: 248px; padding: 38px 12px 32px; display: block; }
+  .gallery-hero h1 { font-size: clamp(52px, 16vw, 76px); }
+  .gallery-intro { margin: 26px 0 0; font-size: 11px; }
+  .art-wall { columns: 2; column-gap: 7px; }
+  .brow-card { margin-bottom: 7px; }
+  .brow-card__top { inset: 9px 9px auto; }
+  .brow-card__caption { inset: auto 10px 10px; gap: 7px; }
+  .artist-avatar { flex-basis: 25px; width: 25px; height: 25px; }
+  .brow-card__caption strong { font-size: 9px; }
+  .brow-card__caption span { font-size: 8px; }
+  .save-button { width: 28px; height: 28px; }
+  .load-more { min-height: 100px; }
+}
+
+@media (max-width: 390px) {
+  .brow-card__caption span { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brow-image, .save-button { transition: none; }
+  .loading-mark { animation: none; }
+}
