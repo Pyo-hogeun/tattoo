@@ -26,22 +26,25 @@ nav { display: flex; align-items: stretch; height: 88px; }
 @media (max-width: 700px) { .gnb { height: 71px; padding: 0 20px; }.brand svg { width: 24px; height: 24px; } nav { height: 71px; }.nav-item { min-width: 54px; }.nav-item span { display: none; }.nav-item::after { inset-inline: 17px; }.menu-button { width: 33px; height: 33px; }.container { padding: 25px 20px 20px; }.title-row { display: block; margin: 32px 0; }.title-row h1 { font-size: clamp(56px, 17vw, 92px); }.intro { margin: 25px 0 0; width: min(280px, 100%); }.gallery-grid { grid-template-columns: 1fr; gap: 10px; }.tattoo-card { height: 72vw; min-height: 265px; }.card-two { height: 58vw; }.flower { font-size: 150px; }.moth { font-size: 152px; }.page-footer { margin-top: 17px; }.content-page { min-height: calc(100svh - 71px); padding-top: 36px; }.profile-layout { display: block; }.content-page h1 { font-size: clamp(50px, 15vw, 74px); margin-top: 32px; }.profile-copy { margin-top: 40px; }.page-title { margin-bottom: 32px !important; } }
 
 /* Image-first brow inspiration gallery */
-.gallery-page { max-width: 1600px; margin: 0 auto; padding: 0 2.2vw 48px; }
-.gallery-hero { min-height: 310px; padding: 58px 2.1vw 48px; display: flex; align-items: flex-end; justify-content: space-between; gap: 48px; }
-.gallery-kicker { margin: 0 0 18px; display: flex; align-items: center; gap: 9px; color: #6d6a63; font: 10px/1 'DM Mono', monospace; letter-spacing: .09em; text-transform: uppercase; }
-.gallery-kicker span { width: 7px; height: 7px; border-radius: 50%; background: #e85836; }
-.gallery-hero h1 { margin: 0; color: #161615; font: 600 clamp(56px, 7.4vw, 112px)/.82 'Playfair Display', Georgia, serif; letter-spacing: -.07em; }
-.gallery-hero h1 em { color: #827d72; font-weight: 600; }
-.gallery-intro { max-width: 330px; margin: 0 1vw 8px 0; color: #66635d; font-size: 12px; line-height: 1.75; }
-.art-wall { columns: 4 260px; column-gap: 12px; }
+.gallery-page { min-height: calc(100svh - 88px); padding: 8px 8px 48px; }
+.art-wall { min-height: calc(100svh - 96px); columns: 4 260px; column-gap: 8px; }
 .brow-card { position: relative; width: 100%; margin: 0 0 12px; break-inside: avoid; overflow: hidden; border-radius: 2px; background: #d6d1c8; color: #fff; isolation: isolate; aspect-ratio: 4 / 5; }
 .brow-card--1, .brow-card--5 { aspect-ratio: 1 / 1; }
 .brow-card--2 { aspect-ratio: 4 / 6; }
 .brow-card--3 { aspect-ratio: 5 / 4; }
 .brow-card--6 { aspect-ratio: 3 / 4; }
+.brow-card--title { min-height: calc(100svh - 104px); aspect-ratio: auto; }
+.brow-card--title .brow-image { position: absolute; inset: 0; }
 .brow-image { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .65s cubic-bezier(.2,.7,.2,1), filter .4s ease; }
 .brow-card:hover .brow-image { transform: scale(1.035); filter: saturate(.88); }
 .brow-card__shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(10,10,9,.2), transparent 33%, transparent 56%, rgba(10,10,9,.72)); pointer-events: none; }
+.brow-card__shade--title { background: linear-gradient(180deg, rgba(15,13,11,.08), rgba(15,13,11,.16) 36%, rgba(15,13,11,.76)); }
+.gallery-title-overlay { position: absolute; z-index: 2; inset: auto 22px 25px; color: #fff; }
+.gallery-title-overlay p { margin: 0 0 16px; display: flex; align-items: center; gap: 8px; font: 9px/1 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
+.gallery-title-overlay p span { width: 6px; height: 6px; border-radius: 50%; background: #e85836; }
+.gallery-title-overlay h1 { margin: 0; font: 600 clamp(42px, 4.4vw, 72px)/.84 'Playfair Display', Georgia, serif; letter-spacing: -.065em; text-shadow: 0 2px 22px rgba(0,0,0,.22); }
+.gallery-title-overlay h1 em { font-weight: 600; }
+.gallery-title-overlay small { display: block; margin-top: 20px; color: rgba(255,255,255,.78); font-size: 10px; letter-spacing: .02em; }
 .brow-card__top { position: absolute; z-index: 2; inset: 14px 14px auto; display: flex; justify-content: space-between; align-items: center; }
 .brow-card__index { font: 9px/1 'DM Mono', monospace; letter-spacing: .08em; text-shadow: 0 1px 8px rgba(0,0,0,.35); }
 .save-button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.52); border-radius: 50%; color: #fff; background: rgba(20,20,18,.14); backdrop-filter: blur(8px); cursor: pointer; transition: background .2s, transform .2s; }
@@ -59,18 +62,19 @@ nav { display: flex; align-items: stretch; height: 88px; }
 @keyframes gallery-spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 1000px) {
-  .gallery-page { padding-inline: 16px; }
-  .gallery-hero { min-height: 270px; padding-inline: 12px; }
+  .gallery-page { padding-inline: 8px; }
   .art-wall { columns: 3 220px; }
 }
 
 @media (max-width: 700px) {
-  .gallery-page { padding: 0 8px 28px; }
-  .gallery-hero { min-height: 248px; padding: 38px 12px 32px; display: block; }
-  .gallery-hero h1 { font-size: clamp(52px, 16vw, 76px); }
-  .gallery-intro { margin: 26px 0 0; font-size: 11px; }
+  .gallery-page { min-height: calc(100svh - 71px); padding: 6px 6px 28px; }
   .art-wall { columns: 2; column-gap: 7px; }
   .brow-card { margin-bottom: 7px; }
+  .brow-card--title { min-height: calc(100svh - 83px); }
+  .gallery-title-overlay { inset: auto 14px 18px; }
+  .gallery-title-overlay p { margin-bottom: 12px; font-size: 7px; }
+  .gallery-title-overlay h1 { font-size: clamp(35px, 10.7vw, 48px); }
+  .gallery-title-overlay small { margin-top: 14px; font-size: 8px; }
   .brow-card__top { inset: 9px 9px auto; }
   .brow-card__caption { inset: auto 10px 10px; gap: 7px; }
   .artist-avatar { flex-basis: 25px; width: 25px; height: 25px; }

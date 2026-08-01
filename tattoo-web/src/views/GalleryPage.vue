@@ -104,14 +104,6 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
 
 <template>
   <section class="gallery-page">
-    <header class="gallery-hero">
-      <div>
-        <p class="gallery-kicker"><span></span> Brow inspiration archive</p>
-        <h1>Find your<br><em>brow mood.</em></h1>
-      </div>
-      <p class="gallery-intro">당신의 다음 눈썹을 위한 레퍼런스.<br>아티스트들의 섬세한 무드를 발견해 보세요.</p>
-    </header>
-
     <div v-if="isLoading" class="gallery-status" role="status">
       <span class="loading-mark"></span>
       새로운 무드를 불러오는 중…
@@ -122,8 +114,22 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
     </div>
     <template v-else-if="visibleItems.length">
       <div class="art-wall">
+        <article class="brow-card brow-card--title">
+          <img
+            :src="getImageUrl(visibleItems[0]!.imageUrl)"
+            :alt="`${visibleItems[0]!.name} 눈썹 디자인`"
+            class="brow-image"
+            decoding="async"
+          >
+          <div class="brow-card__shade brow-card__shade--title"></div>
+          <div class="gallery-title-overlay">
+            <p><span></span> Brow inspiration archive</p>
+            <h1>Find your<br><em>brow mood.</em></h1>
+            <small>당신의 다음 눈썹을 위한 레퍼런스</small>
+          </div>
+        </article>
         <article
-          v-for="(item, index) in visibleItems"
+          v-for="(item, index) in visibleItems.slice(1)"
           :key="item._id"
           class="brow-card"
           :class="`brow-card--${index % 7}`"
@@ -137,7 +143,7 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
           >
           <div class="brow-card__shade"></div>
           <div class="brow-card__top">
-            <span class="brow-card__index">{{ String(index + 1).padStart(2, '0') }}</span>
+            <span class="brow-card__index">{{ String(index + 2).padStart(2, '0') }}</span>
             <button type="button" class="save-button" :aria-label="`${item.name} 저장`">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
             </button>
