@@ -2,6 +2,11 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 
 type GalleryItem = { _id: string; title: string; description?: string; imageUrl: string; updatedAt: string };
+type ManagerAccount = {
+  nickname?: string;
+  role?: string;
+  shop?: { name?: string; address?: string; phone?: string };
+};
 
 const config = useRuntimeConfig();
 const items = ref<GalleryItem[]>([]);
@@ -14,6 +19,7 @@ const selectedFile = ref<File | null>(null);
 const previewUrl = ref('');
 const fileInput = ref<HTMLInputElement | null>(null);
 const form = reactive({ title: '', description: '' });
+const account = ref<ManagerAccount | null>(null);
 
 const isEditing = computed(() => Boolean(editingId.value));
 const canSave = computed(() => Boolean(form.title.trim()) && Boolean(selectedFile.value || editingId.value) && !isSaving.value);
@@ -107,7 +113,13 @@ const remove = async (id: string) => {
   await load();
 };
 
-onMounted(() => load().catch(() => { error.value = '로그인하거나 manager 권한을 확인해 주세요.'; }));
+onMounted(() => {
+  const savedAccount = localStorage.getItem('auth_user');
+  if (savedAccount) {
+    try { account.value = JSON.parse(savedAccount); } catch { localStorage.removeItem('auth_user'); }
+  }
+  load().catch(() => { error.value = '로그인하거나 manager 권한을 확인해 주세요.'; });
+});
 onBeforeUnmount(clearPreview);
 </script>
 
@@ -122,6 +134,14 @@ onBeforeUnmount(clearPreview);
         </div>
         <NuxtLink to="/" class="rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-sm">홈으로</NuxtLink>
       </header>
+
+      <section v-if="account" class="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 shadow-sm" aria-label="로그인 계정 정보">
+        <span class="font-semibold text-slate-900">{{ account.nickname || '매장 관리자' }}</span>
+        <span class="rounded-full bg-amber-50 px-2 py-1 font-bold uppercase text-amber-700">{{ account.role || 'manager' }}</span>
+        <span v-if="account.shop?.name"><b class="text-slate-700">매장</b> {{ account.shop.name }}</span>
+        <span v-if="account.shop?.phone"><b class="text-slate-700">연락처</b> {{ account.shop.phone }}</span>
+        <span v-if="account.shop?.address" class="min-w-0 truncate"><b class="text-slate-700">주소</b> {{ account.shop.address }}</span>
+      </section>
 
       <div class="grid items-start gap-8 lg:grid-cols-[380px,1fr]">
         <form class="rounded-2xl border bg-white p-5 shadow-sm lg:sticky lg:top-6" @submit.prevent="save">

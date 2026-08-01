@@ -5,6 +5,22 @@ const form = reactive({ shopName: '', address: '', phone: '' });
 const testForm = reactive({ loginId: '', password: '', nickname: '', role: 'manager' });
 const error = ref('');
 const isTestSigningUp = ref(false);
+const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.startsWith('02')) {
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 2)}-${digits.slice(2, 5)}-${digits.slice(5)}`;
+    return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+};
+const onPhoneInput = (event: Event) => {
+  form.phone = formatPhone((event.target as HTMLInputElement).value);
+};
 const startKakao = () => {
   error.value = '';
   if (!form.shopName.trim() || !form.address.trim() || !form.phone.trim()) { error.value = '모든 항목을 입력해 주세요.'; return; }
@@ -45,7 +61,7 @@ const signUpWithId = async () => {
       <form class="mt-8 space-y-5" @submit.prevent="startKakao">
         <label class="block"><span class="mb-1 block text-sm font-medium">매장명</span><input v-model="form.shopName" required class="w-full rounded-lg border p-3" placeholder="타투 매장명을 입력하세요" /></label>
         <label class="block"><span class="mb-1 block text-sm font-medium">주소</span><input v-model="form.address" required class="w-full rounded-lg border p-3" placeholder="매장 주소를 입력하세요" /></label>
-        <label class="block"><span class="mb-1 block text-sm font-medium">전화번호</span><input v-model="form.phone" required type="tel" class="w-full rounded-lg border p-3" placeholder="010-1234-5678" /></label>
+        <label class="block"><span class="mb-1 block text-sm font-medium">전화번호</span><input :value="form.phone" required type="tel" inputmode="numeric" autocomplete="tel" maxlength="13" class="w-full rounded-lg border p-3" placeholder="010-1234-5678" @input="onPhoneInput" /><span class="mt-1 block text-xs text-slate-400">숫자만 입력하면 하이픈이 자동으로 추가됩니다.</span></label>
         <p v-if="error" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
         <button class="w-full rounded-lg bg-[#FEE500] px-4 py-3 font-semibold text-[#191919]">카카오로 인증하고 가입하기</button>
       </form>
