@@ -2,6 +2,17 @@ import { env } from '../config/env.js';
 import { Shop } from '../models/Shop.js';
 import { User } from '../models/User.js';
 import { signToken } from '../utils/token.js';
+import { hashPassword, verifyPassword } from '../utils/password.js';
+
+const testAuthUnavailable = () => {
+  const error = new Error('임시 ID/PW 인증이 비활성화되어 있습니다.');
+  error.statusCode = 404;
+  return error;
+};
+
+const normalizeLoginId = (value) => typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const validateTestPassword = (password) => typeof password === 'string' && password.length >= 8;
 
 const getKakaoProfile = async ({ accessToken, code, redirectUri, clientId }) => {
   let token = accessToken;
@@ -74,6 +85,58 @@ export const kakaoLogin = async (req, res, next) => {
     if (!user.isActive) return res.status(403).json({ message: '비활성 계정입니다.' });
     const token = signToken(user);
     res.json({ token, user: publicUser(user) });
+  } catch (error) { next(error); }
+};
+
+export const testSignUp = async (req, res, next) => {
+  let shop;
+  try {
+    if (!env.enableTestAuth) throw testAuthUnavailable();
+    const body = req.body || {};
+    const { nickname, shopName, address, phone } = body;
+    const loginId = normalizeLoginId(body.loginId);
+    const password = body.password;
+    const role = ['master', 'admin', 'manager'].includes(body.role) ? body.role : 'manager';
+
+    if (!/^[a-z0-9._-]{4,40}$/.test(loginId)) {
+      return res.status(400).json({ message: 'ID는 영문 소문자, 숫자, ., _, - 조합으로 4~40자여야 합니다.' });
+    }
+    if (!validateTestPassword(password)) return res.status(400).json({ message: '비밀번호는 8자 이상이어야 합니다.' });
+    if (![shopName, address, phone].every((value) => typeof value === 'string' && value.trim())) {
+      return res.status(400).json({ message: '매장명, 주소, 전화번호는 필수입니다.' });
+    }
+    if (await User.exists({ loginId })) return res.status(409).json({ message: '이미 사용 중인 ID입니다.' });
+
+    shop = await Shop.create({
+      name: shopName.trim(), address: address.trim(), phone: phone.trim(),
+      dataSourceType: 'manual', sourceName: 'test-signup'
+    });
+    const user = await User.create({
+      loginId,
+      passwordHash: await hashPassword(password),
+      nickname: typeof nickname === 'string' ? nickname.trim() : loginId,
+      role,
+      shop: shop._id
+    });
+    await user.populate('shop');
+    res.status(201).json({ token: signToken(user), user: publicUser(user) });
+  } catch (error) {
+    if (shop) await Shop.findByIdAndDelete(shop._id).catch(() => {});
+    next(error);
+  }
+};
+
+export const testLogin = async (req, res, next) => {
+  try {
+    if (!env.enableTestAuth) throw testAuthUnavailable();
+    const body = req.body || {};
+    const loginId = normalizeLoginId(body.loginId);
+    const user = await User.findOne({ loginId }).select('+passwordHash').populate('shop');
+    if (!user || !await verifyPassword(body.password, user.passwordHash)) {
+      return res.status(401).json({ message: 'ID 또는 비밀번호가 올바르지 않습니다.' });
+    }
+    if (!user.isActive) return res.status(403).json({ message: '비활성 계정입니다.' });
+    res.json({ token: signToken(user), user: publicUser(user) });
   } catch (error) { next(error); }
 };
 

@@ -16,6 +16,7 @@ export const env = {
   kakaoClientId: process.env.KAKAO_CLIENT_ID?.trim() || '',
   kakaoClientSecret: process.env.KAKAO_CLIENT_SECRET?.trim() || '',
   kakaoRedirectUri: process.env.KAKAO_REDIRECT_URI?.trim() || 'http://localhost:3000/auth/kakao/callback',
+  enableTestAuth: process.env.NODE_ENV !== 'production' && process.env.ENABLE_TEST_AUTH === 'true',
   r2Endpoint: process.env.R2_ENDPOINT?.trim() || '',
   r2AccessKey: process.env.R2_ACCESS_KEY?.trim() || '',
   r2SecretKey: process.env.R2_SECRET_KEY?.trim() || '',

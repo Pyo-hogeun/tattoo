@@ -117,6 +117,26 @@ Client Secret은 카카오 개발자 콘솔에서 별도로 활성화한 경우�
 모두 재시작한 다음 처음부터 다시 시도해야 합니다. 인가 코드는 일회용이므로 오류가 발생한
 콜백 페이지를 새로고침해서 재사용할 수 없습니다.
 
+### 테스트 전용 ID/PW 인증
+
+여러 매장 계정과 `manager`, `admin`, `master` 권한을 로컬에서 테스트할 때만 양쪽 환경
+변수를 활성화할 수 있습니다.
+
+```dotenv
+# backend/.env
+ENABLE_TEST_AUTH=true
+
+# frontend/.env
+NUXT_PUBLIC_ENABLE_TEST_AUTH=true
+```
+
+활성화하면 `/signup`과 `/`에 테스트 전용 ID/PW 입력란이 표시되고
+`POST /api/auth/test/signup`, `POST /api/auth/test/login`을 사용할 수 있습니다. 테스트
+가입에도 매장명, 주소, 전화번호가 필요하며 선택한 역할로 계정이 생성됩니다. 비밀번호는
+scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므로 **운영 환경에서는 두 값을
+반드시 `false`로 유지해야 하며**, 코드에서도 `NODE_ENV=production`일 때 강제로
+비활성화됩니다.
+
 - `manager`: 카카오 가입 시 기본 권한. 본인이 등록한 갤러리 사진만 조회·등록·수정·삭제
 - `admin`: 전체 매장 목록 조회 및 매장 정보 수정
 - `master`: 전체 매장 관리 및 회원 권한 변경

@@ -63,7 +63,8 @@ export const openapiDocument = {
     { name: 'System', description: '서버 상태 확인' },
     { name: 'Shops', description: '매장 관리' },
     { name: 'Brow shapes', description: '눈썹 형태 관리' },
-    { name: 'Gallery', description: 'R2 갤러리 이미지 조회' }
+    { name: 'Gallery', description: 'R2 갤러리 이미지 조회' },
+    { name: 'Auth', description: '회원가입, 로그인 및 권한 관리' }
   ],
   paths: {
     '/health': {
@@ -126,6 +127,22 @@ export const openapiDocument = {
           500: errorResponse('서버 오류')
         }
       }
+    },
+    '/api/auth/test/signup': {
+      post: {
+        tags: ['Auth'], summary: '테스트 전용 ID/PW 회원가입',
+        description: 'ENABLE_TEST_AUTH=true인 로컬/테스트 환경에서만 사용할 수 있습니다.',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/TestSignUpInput' } } } },
+        responses: { 201: { description: '가입 및 로그인 완료' }, 400: errorResponse('입력값 오류'), 404: errorResponse('테스트 인증 비활성화'), 409: errorResponse('중복 ID 또는 매장') }
+      }
+    },
+    '/api/auth/test/login': {
+      post: {
+        tags: ['Auth'], summary: '테스트 전용 ID/PW 로그인',
+        description: 'ENABLE_TEST_AUTH=true인 로컬/테스트 환경에서만 사용할 수 있습니다.',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/TestLoginInput' } } } },
+        responses: { 200: { description: '로그인 완료' }, 401: errorResponse('잘못된 ID 또는 비밀번호'), 404: errorResponse('테스트 인증 비활성화') }
+      }
     }
   },
   components: {
@@ -140,7 +157,9 @@ export const openapiDocument = {
       BrowShapeMultipartInput: { type: 'object', required: ['name'], properties: { name: browShapeProperties.name, imageUrl: browShapeProperties.imageUrl, description: browShapeProperties.description, isActive: { type: 'boolean', default: true }, image: { type: 'string', format: 'binary', description: 'JPEG, PNG, WebP 또는 GIF (최대 10MB)' } } },
       BrowShapeList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/BrowShape' } }, total: { type: 'integer' } } },
       R2GalleryImage: { type: 'object', required: ['key', 'url', 'size'], properties: { key: { type: 'string', example: 'gallery/example.webp' }, url: { type: 'string', format: 'uri' }, size: { type: 'integer', minimum: 0, description: '파일 크기(byte)' }, lastModified: { type: 'string', format: 'date-time' }, etag: { type: 'string' } } },
-      R2GalleryList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/R2GalleryImage' } }, total: { type: 'integer' } } }
+      R2GalleryList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/R2GalleryImage' } }, total: { type: 'integer' } } },
+      TestLoginInput: { type: 'object', required: ['loginId', 'password'], properties: { loginId: { type: 'string', minLength: 4, maxLength: 40 }, password: { type: 'string', minLength: 8 } } },
+      TestSignUpInput: { type: 'object', required: ['loginId', 'password', 'shopName', 'address', 'phone'], properties: { loginId: { type: 'string', pattern: '^[a-z0-9._-]{4,40}$' }, password: { type: 'string', minLength: 8 }, nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'], default: 'manager' }, shopName: { type: 'string' }, address: { type: 'string' }, phone: { type: 'string' } } }
     }
   }
 };

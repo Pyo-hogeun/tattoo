@@ -2,7 +2,9 @@
 import { reactive, ref } from 'vue';
 const config = useRuntimeConfig();
 const form = reactive({ shopName: '', address: '', phone: '' });
+const testForm = reactive({ loginId: '', password: '', nickname: '', role: 'manager' });
 const error = ref('');
+const isTestSigningUp = ref(false);
 const startKakao = () => {
   error.value = '';
   if (!form.shopName.trim() || !form.address.trim() || !form.phone.trim()) { error.value = '모든 항목을 입력해 주세요.'; return; }
@@ -12,6 +14,24 @@ const startKakao = () => {
   const query = new URLSearchParams({ client_id: String(config.public.kakaoClientId), redirect_uri: String(config.public.kakaoRedirectUri), response_type: 'code', state: crypto.randomUUID() });
   sessionStorage.setItem('kakao_oauth_state', query.get('state')!);
   location.href = `https://kauth.kakao.com/oauth/authorize?${query}`;
+};
+
+const signUpWithId = async () => {
+  error.value = '';
+  if (!form.shopName.trim() || !form.address.trim() || !form.phone.trim()) { error.value = '매장 정보를 모두 입력해 주세요.'; return; }
+  isTestSigningUp.value = true;
+  try {
+    const data: any = await $fetch(`${config.public.apiBase}/auth/test/signup`, {
+      method: 'POST', body: { ...form, ...testForm }
+    });
+    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('auth_user', JSON.stringify(data.user));
+    await navigateTo(data.user.role === 'manager' ? '/gallery/manage' : '/shops/list');
+  } catch (requestError: any) {
+    error.value = requestError?.data?.message || 'ID/PW 테스트 회원가입에 실패했습니다.';
+  } finally {
+    isTestSigningUp.value = false;
+  }
 };
 </script>
 
@@ -28,6 +48,14 @@ const startKakao = () => {
         <label class="block"><span class="mb-1 block text-sm font-medium">전화번호</span><input v-model="form.phone" required type="tel" class="w-full rounded-lg border p-3" placeholder="010-1234-5678" /></label>
         <p v-if="error" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
         <button class="w-full rounded-lg bg-[#FEE500] px-4 py-3 font-semibold text-[#191919]">카카오로 인증하고 가입하기</button>
+      </form>
+      <form v-if="config.public.enableTestAuth" class="mt-6 space-y-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4" @submit.prevent="signUpWithId">
+        <div><strong class="text-sm">테스트 전용 ID/PW 가입</strong><p class="mt-1 text-xs text-red-600">운영 환경에서는 반드시 비활성화하세요.</p></div>
+        <input v-model="testForm.loginId" required minlength="4" maxlength="40" pattern="[a-z0-9._-]+" autocomplete="username" class="w-full rounded-lg border bg-white p-2.5 text-sm" placeholder="ID (영문 소문자/숫자, 4자 이상)" />
+        <input v-model="testForm.password" required minlength="8" type="password" autocomplete="new-password" class="w-full rounded-lg border bg-white p-2.5 text-sm" placeholder="비밀번호 (8자 이상)" />
+        <input v-model="testForm.nickname" class="w-full rounded-lg border bg-white p-2.5 text-sm" placeholder="닉네임 (선택)" />
+        <select v-model="testForm.role" class="w-full rounded-lg border bg-white p-2.5 text-sm"><option value="manager">manager</option><option value="admin">admin</option><option value="master">master</option></select>
+        <button :disabled="isTestSigningUp" class="w-full rounded-lg bg-slate-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">{{ isTestSigningUp ? '가입 중…' : 'ID/PW 테스트 계정 만들기' }}</button>
       </form>
       <div class="mt-7 rounded-lg bg-slate-50 p-4 text-xs leading-6 text-slate-600"><b>권한 안내</b><br />manager: 본인 갤러리 등록·조회·편집<br />admin: 매장 목록 조회·매장정보 편집<br />master: 전체 관리 및 회원 권한 변경</div>
     </section>

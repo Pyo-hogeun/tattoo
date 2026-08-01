@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 const config = useRuntimeConfig();
 const error = ref('');
 const savedUser = ref<{ nickname?: string; role?: string } | null>(null);
+const testLogin = reactive({ loginId: '', password: '' });
+const isTestLoggingIn = ref(false);
 const isConfigured = computed(() => Boolean(config.public.kakaoClientId));
 
 const destinationByRole = (role?: string) => role === 'manager' ? '/gallery/manage' : '/shops/list';
@@ -33,6 +35,23 @@ const logout = () => {
   localStorage.removeItem('auth_token');
   localStorage.removeItem('auth_user');
   savedUser.value = null;
+};
+
+const loginWithId = async () => {
+  isTestLoggingIn.value = true;
+  error.value = '';
+  try {
+    const data: any = await $fetch(`${config.public.apiBase}/auth/test/login`, {
+      method: 'POST', body: testLogin
+    });
+    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('auth_user', JSON.stringify(data.user));
+    await navigateTo(destinationByRole(data.user.role));
+  } catch (requestError: any) {
+    error.value = requestError?.data?.message || 'ID/PW 로그인에 실패했습니다.';
+  } finally {
+    isTestLoggingIn.value = false;
+  }
 };
 
 onMounted(() => {
@@ -68,6 +87,13 @@ onMounted(() => {
           <button class="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#FEE500] px-4 py-3 font-semibold text-[#191919] transition hover:bg-[#f5dc00]" @click="startKakaoLogin">
             <span class="text-lg">●</span> 카카오로 로그인
           </button>
+
+          <form v-if="config.public.enableTestAuth" class="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4" @submit.prevent="loginWithId">
+            <p class="mb-3 text-xs font-bold text-slate-500">테스트 전용 ID/PW 로그인</p>
+            <input v-model="testLogin.loginId" required autocomplete="username" class="w-full rounded-lg border bg-white p-2.5 text-sm" placeholder="테스트 ID" />
+            <input v-model="testLogin.password" required minlength="8" type="password" autocomplete="current-password" class="mt-2 w-full rounded-lg border bg-white p-2.5 text-sm" placeholder="비밀번호 (8자 이상)" />
+            <button :disabled="isTestLoggingIn" class="mt-3 w-full rounded-lg bg-slate-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{{ isTestLoggingIn ? '로그인 중…' : 'ID/PW로 로그인' }}</button>
+          </form>
           <p v-if="error" class="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
 
           <div class="my-7 flex items-center gap-3 text-xs text-slate-400"><span class="h-px flex-1 bg-slate-200" />아직 파트너가 아니신가요?<span class="h-px flex-1 bg-slate-200" /></div>
