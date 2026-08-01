@@ -33,18 +33,16 @@ nav { display: flex; align-items: stretch; height: 88px; }
 .brow-card--2 { aspect-ratio: 4 / 6; }
 .brow-card--3 { aspect-ratio: 5 / 4; }
 .brow-card--6 { aspect-ratio: 3 / 4; }
-.brow-card--title { min-height: calc(100svh - 104px); aspect-ratio: auto; }
-.brow-card--title .brow-image { position: absolute; inset: 0; }
+.brow-card--title { min-height: calc(100svh - 104px); aspect-ratio: auto; background: transparent; color: #161615; }
 .brow-image { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .65s cubic-bezier(.2,.7,.2,1), filter .4s ease; }
 .brow-card:hover .brow-image { transform: scale(1.035); filter: saturate(.88); }
 .brow-card__shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(10,10,9,.2), transparent 33%, transparent 56%, rgba(10,10,9,.72)); pointer-events: none; }
-.brow-card__shade--title { background: linear-gradient(180deg, rgba(15,13,11,.08), rgba(15,13,11,.16) 36%, rgba(15,13,11,.76)); }
-.gallery-title-overlay { position: absolute; z-index: 2; inset: auto 22px 25px; color: #fff; }
+.gallery-title-overlay { position: absolute; z-index: 2; inset: auto 22px 25px; color: inherit; }
 .gallery-title-overlay p { margin: 0 0 16px; display: flex; align-items: center; gap: 8px; font: 9px/1 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
 .gallery-title-overlay p span { width: 6px; height: 6px; border-radius: 50%; background: #e85836; }
-.gallery-title-overlay h1 { margin: 0; font: 600 clamp(42px, 4.4vw, 72px)/.84 'Playfair Display', Georgia, serif; letter-spacing: -.065em; text-shadow: 0 2px 22px rgba(0,0,0,.22); }
+.gallery-title-overlay h1 { margin: 0; font: 600 clamp(42px, 4.4vw, 72px)/.84 'Playfair Display', Georgia, serif; letter-spacing: -.065em; }
 .gallery-title-overlay h1 em { font-weight: 600; }
-.gallery-title-overlay small { display: block; margin-top: 20px; color: rgba(255,255,255,.78); font-size: 10px; letter-spacing: .02em; }
+.gallery-title-overlay small { display: block; margin-top: 20px; color: #6d6a63; font-size: 10px; letter-spacing: .02em; }
 .brow-card__top { position: absolute; z-index: 2; inset: 14px 14px auto; display: flex; justify-content: space-between; align-items: center; }
 .brow-card__index { font: 9px/1 'DM Mono', monospace; letter-spacing: .08em; text-shadow: 0 1px 8px rgba(0,0,0,.35); }
 .save-button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.52); border-radius: 50%; color: #fff; background: rgba(20,20,18,.14); backdrop-filter: blur(8px); cursor: pointer; transition: background .2s, transform .2s; }

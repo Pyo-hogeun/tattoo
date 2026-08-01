@@ -115,13 +115,6 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
     <template v-else-if="visibleItems.length">
       <div class="art-wall">
         <article class="brow-card brow-card--title">
-          <img
-            :src="getImageUrl(visibleItems[0]!.imageUrl)"
-            :alt="`${visibleItems[0]!.name} 눈썹 디자인`"
-            class="brow-image"
-            decoding="async"
-          >
-          <div class="brow-card__shade brow-card__shade--title"></div>
           <div class="gallery-title-overlay">
             <p><span></span> Brow inspiration archive</p>
             <h1>Find your<br><em>brow mood.</em></h1>
@@ -129,7 +122,7 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
           </div>
         </article>
         <article
-          v-for="(item, index) in visibleItems.slice(1)"
+          v-for="(item, index) in visibleItems"
           :key="item._id"
           class="brow-card"
           :class="`brow-card--${index % 7}`"
@@ -143,7 +136,7 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
           >
           <div class="brow-card__shade"></div>
           <div class="brow-card__top">
-            <span class="brow-card__index">{{ String(index + 2).padStart(2, '0') }}</span>
+            <span class="brow-card__index">{{ String(index + 1).padStart(2, '0') }}</span>
             <button type="button" class="save-button" :aria-label="`${item.name} 저장`">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
             </button>
