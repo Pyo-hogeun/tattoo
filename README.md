@@ -134,8 +134,8 @@ NUXT_PUBLIC_ENABLE_TEST_AUTH=true
 `POST /api/auth/test/signup`, `POST /api/auth/test/login`을 사용할 수 있습니다. 테스트
 가입에도 매장명, 주소, 전화번호가 필요하며 선택한 역할로 계정이 생성됩니다. 비밀번호는
 scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므로 **운영 환경에서는 두 값을
-반드시 `false`로 유지해야 하며**, 코드에서도 `NODE_ENV=production`일 때 강제로
-비활성화됩니다.
+반드시 `false`로 유지해야 합니다. 백엔드 API는 코드에서도 `NODE_ENV=production`일 때
+강제로 비활성화됩니다.
 
 - `manager`: 카카오 가입 시 기본 권한. 본인이 등록한 갤러리 사진만 조회·등록·수정·삭제
 - `admin`: 전체 매장 목록 조회 및 매장 정보 수정
