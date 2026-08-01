@@ -27,7 +27,7 @@ nav { display: flex; align-items: stretch; height: 88px; }
 
 /* Image-first brow inspiration gallery */
 .gallery-page { min-height: calc(100svh - 88px); padding: 8px 8px 48px; }
-.art-wall { min-height: calc(100svh - 96px); columns: 3 340px; column-gap: 8px; }
+.art-wall { min-height: calc(100svh - 96px); columns: 5 220px; column-gap: 8px; }
 .brow-card { position: relative; width: 100%; margin: 0 0 8px; break-inside: avoid; overflow: hidden; border-radius: 2px; background: #d6d1c8; color: #fff; isolation: isolate; aspect-ratio: 3 / 2; }
 .brow-card--1, .brow-card--5 { aspect-ratio: 16 / 9; }
 .brow-card--2 { aspect-ratio: 4 / 3; }
@@ -61,17 +61,17 @@ nav { display: flex; align-items: stretch; height: 88px; }
 
 @media (max-width: 1000px) {
   .gallery-page { padding-inline: 8px; }
-  .art-wall { columns: 2 300px; }
+  .art-wall { columns: 4 160px; }
 }
 
 @media (max-width: 700px) {
   .gallery-page { min-height: calc(100svh - 71px); padding: 6px 6px 28px; }
-  .art-wall { columns: 1; column-gap: 0; }
+  .art-wall { columns: 2; column-gap: 7px; }
   .brow-card { margin-bottom: 7px; }
   .brow-card--title { aspect-ratio: 16 / 10; }
   .gallery-title-overlay { inset: auto 14px 18px; }
   .gallery-title-overlay p { margin-bottom: 12px; font-size: 7px; }
-  .gallery-title-overlay h1 { font-size: clamp(35px, 10.7vw, 48px); }
+  .gallery-title-overlay h1 { font-size: clamp(28px, 8vw, 40px); }
   .gallery-title-overlay small { margin-top: 14px; font-size: 8px; }
   .brow-card__top { inset: 9px 9px auto; }
   .brow-card__caption { inset: auto 10px 10px; gap: 7px; }
