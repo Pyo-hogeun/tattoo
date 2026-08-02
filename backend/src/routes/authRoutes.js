@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { kakaoLogin, kakaoSignUp, me, testLogin, testSignUp, updateUserRole } from '../controllers/authController.js';
+import { getUser, kakaoLogin, kakaoSignUp, listUsers, me, testLogin, testSignUp, updateUser, updateUserRole } from '../controllers/authController.js';
 import { allowRoles, authenticate } from '../middleware/auth.js';
 const router = Router();
 router.post('/kakao/signup', kakaoSignUp);
@@ -7,5 +7,8 @@ router.post('/kakao/login', kakaoLogin);
 router.post('/test/signup', testSignUp);
 router.post('/test/login', testLogin);
 router.get('/me', authenticate, me);
+router.get('/users', authenticate, allowRoles('master', 'admin'), listUsers);
+router.get('/users/:id', authenticate, allowRoles('master', 'admin'), getUser);
+router.patch('/users/:id', authenticate, allowRoles('master', 'admin'), updateUser);
 router.patch('/users/:id/role', authenticate, allowRoles('master'), updateUserRole);
 export default router;

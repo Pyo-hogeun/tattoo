@@ -145,6 +145,10 @@ scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므
 운영 환경에서는 최초 master 계정을 DB에서 지정한 뒤 `PATCH /api/auth/users/:id/role`로
 나머지 회원의 권한을 관리하세요.
 
+`master`, `admin` 계정은 백오피스의 `/users`에서 사용자 목록을 검색·필터링하고 상세 화면에서
+닉네임, 권한, 활성 상태를 수정할 수 있습니다. `admin`은 `master` 계정을 수정하거나 다른
+사용자에게 `master` 권한을 부여할 수 없으며, 현재 로그인한 계정은 스스로 비활성화할 수 없습니다.
+
 manager가 갤러리에서 업로드한 JPG, PNG, WEBP, GIF 파일은 `/brow-shapes/manage`의 이미지와
 동일한 Cloudflare R2 버킷에 `gallery/...` 키로 저장됩니다. 파일당 최대 크기는 10MB입니다.
 백엔드 `.env`에 `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`, `R2_BUCKET`,

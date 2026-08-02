@@ -56,6 +56,18 @@ const getKakaoProfile = async ({ accessToken, code, redirectUri, clientId }) => 
 
 const publicUser = (user) => ({ id: user.id, nickname: user.nickname, role: user.role, shop: user.shop });
 
+const managedUser = (user) => ({
+  id: user.id,
+  nickname: user.nickname,
+  loginId: user.loginId || null,
+  kakaoId: user.kakaoId || null,
+  role: user.role,
+  shop: user.shop,
+  isActive: user.isActive,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt
+});
+
 export const kakaoSignUp = async (req, res, next) => {
   try {
     const { shopName, address, phone } = req.body;
@@ -141,6 +153,63 @@ export const testLogin = async (req, res, next) => {
 };
 
 export const me = (req, res) => res.json({ user: publicUser(req.user) });
+
+export const listUsers = async (req, res, next) => {
+  try {
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 20, 1), 100);
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const role = ['master', 'admin', 'manager'].includes(req.query.role) ? req.query.role : undefined;
+    const filter = {};
+    if (role) filter.role = role;
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { nickname: { $regex: escaped, $options: 'i' } },
+        { loginId: { $regex: escaped, $options: 'i' } }
+      ];
+    }
+    const [users, total] = await Promise.all([
+      User.find(filter).populate('shop').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      User.countDocuments(filter)
+    ]);
+    res.json({ items: users.map(managedUser), total, page, limit, totalPages: Math.ceil(total / limit) });
+  } catch (error) { next(error); }
+};
+
+export const getUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id).populate('shop');
+    if (!user) return res.status(404).json({ message: '회원을 찾을 수 없습니다.' });
+    res.json({ user: managedUser(user) });
+  } catch (error) { next(error); }
+};
+
+export const updateUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id).populate('shop');
+    if (!user) return res.status(404).json({ message: '회원을 찾을 수 없습니다.' });
+    if (req.user.role === 'admin' && (user.role === 'master' || req.body.role === 'master')) {
+      return res.status(403).json({ message: 'admin은 master 계정을 수정하거나 master 권한을 부여할 수 없습니다.' });
+    }
+    const nickname = typeof req.body.nickname === 'string' ? req.body.nickname.trim() : undefined;
+    if (nickname !== undefined && !nickname) return res.status(400).json({ message: '닉네임을 입력해 주세요.' });
+    if (req.body.role !== undefined && !['master', 'admin', 'manager'].includes(req.body.role)) {
+      return res.status(400).json({ message: '올바른 권한을 선택해 주세요.' });
+    }
+    if (req.body.isActive !== undefined && typeof req.body.isActive !== 'boolean') {
+      return res.status(400).json({ message: '활성 상태 값이 올바르지 않습니다.' });
+    }
+    if (String(user._id) === String(req.user._id) && req.body.isActive === false) {
+      return res.status(400).json({ message: '현재 로그인한 계정은 비활성화할 수 없습니다.' });
+    }
+    if (nickname !== undefined) user.nickname = nickname;
+    if (req.body.role !== undefined) user.role = req.body.role;
+    if (req.body.isActive !== undefined) user.isActive = req.body.isActive;
+    await user.save();
+    res.json({ user: managedUser(user) });
+  } catch (error) { next(error); }
+};
 
 export const updateUserRole = async (req, res, next) => {
   try {

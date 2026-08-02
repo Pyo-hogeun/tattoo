@@ -143,6 +143,22 @@ export const openapiDocument = {
         requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/TestLoginInput' } } } },
         responses: { 200: { description: '로그인 완료' }, 401: errorResponse('잘못된 ID 또는 비밀번호'), 404: errorResponse('테스트 인증 비활성화') }
       }
+    },
+    '/api/auth/users': {
+      get: {
+        tags: ['Auth'], summary: '사용자 목록 조회', description: 'master 또는 admin 권한이 필요합니다.',
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } },
+          { name: 'search', in: 'query', description: '닉네임 또는 로그인 ID 검색', schema: { type: 'string' } },
+          { name: 'role', in: 'query', schema: { type: 'string', enum: ['master', 'admin', 'manager'] } }
+        ],
+        responses: { 200: { description: '사용자 목록', content: { 'application/json': { schema: { $ref: '#/components/schemas/UserList' } } } }, 401: errorResponse('인증 필요'), 403: errorResponse('권한 없음') }
+      }
+    },
+    '/api/auth/users/{id}': {
+      get: { tags: ['Auth'], summary: '사용자 상세 조회', description: 'master 또는 admin 권한이 필요합니다.', parameters: [idParameter], responses: { 200: { description: '사용자 상세' }, 404: errorResponse('사용자를 찾을 수 없음') } },
+      patch: { tags: ['Auth'], summary: '사용자 정보 수정', description: '닉네임, 권한, 활성 상태를 수정합니다. admin은 master 계정을 수정하거나 master 권한을 부여할 수 없습니다.', parameters: [idParameter], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UserUpdateInput' } } } }, responses: { 200: { description: '수정된 사용자' }, 400: errorResponse('입력값 오류'), 403: errorResponse('권한 없음'), 404: errorResponse('사용자를 찾을 수 없음') } }
     }
   },
   components: {
@@ -159,7 +175,10 @@ export const openapiDocument = {
       R2GalleryImage: { type: 'object', required: ['key', 'url', 'size', 'publisherName', 'publishedAt', 'title', 'description'], properties: { key: { type: 'string', example: 'gallery/example.webp' }, url: { type: 'string', format: 'uri' }, size: { type: 'integer', minimum: 0, description: '파일 크기(byte)' }, lastModified: { type: 'string', format: 'date-time' }, etag: { type: 'string' }, publisherName: { type: 'string', nullable: true, description: '게시 매장명' }, publishedAt: { type: 'string', format: 'date-time', nullable: true, description: '게시일' }, title: { type: 'string', nullable: true, description: '작품 제목' }, description: { type: 'string', nullable: true, description: '작품 설명' } } },
       R2GalleryList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/R2GalleryImage' } }, total: { type: 'integer' } } },
       TestLoginInput: { type: 'object', required: ['loginId', 'password'], properties: { loginId: { type: 'string', minLength: 4, maxLength: 40 }, password: { type: 'string', minLength: 8 } } },
-      TestSignUpInput: { type: 'object', required: ['loginId', 'password', 'shopName', 'address', 'phone'], properties: { loginId: { type: 'string', pattern: '^[a-z0-9._-]{4,40}$' }, password: { type: 'string', minLength: 8 }, nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'], default: 'manager' }, shopName: { type: 'string' }, address: { type: 'string' }, phone: { type: 'string' } } }
+      TestSignUpInput: { type: 'object', required: ['loginId', 'password', 'shopName', 'address', 'phone'], properties: { loginId: { type: 'string', pattern: '^[a-z0-9._-]{4,40}$' }, password: { type: 'string', minLength: 8 }, nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'], default: 'manager' }, shopName: { type: 'string' }, address: { type: 'string' }, phone: { type: 'string' } } },
+      ManagedUser: { type: 'object', required: ['id', 'role', 'isActive', 'createdAt', 'updatedAt'], properties: { id: { type: 'string' }, nickname: { type: 'string' }, loginId: { type: 'string', nullable: true }, kakaoId: { type: 'string', nullable: true }, role: { type: 'string', enum: ['master', 'admin', 'manager'] }, shop: { $ref: '#/components/schemas/Shop' }, isActive: { type: 'boolean' }, createdAt: { type: 'string', format: 'date-time' }, updatedAt: { type: 'string', format: 'date-time' } } },
+      UserList: { type: 'object', required: ['items', 'total', 'page', 'limit', 'totalPages'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/ManagedUser' } }, total: { type: 'integer' }, page: { type: 'integer' }, limit: { type: 'integer' }, totalPages: { type: 'integer' } } },
+      UserUpdateInput: { type: 'object', properties: { nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'] }, isActive: { type: 'boolean' } } }
     }
   }
 };
