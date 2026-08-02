@@ -3,10 +3,11 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } f
 
 interface GalleryItem {
   _id: string
-  name: string
   imageUrl: string
-  author: string
-  location: string
+  publisherName: string
+  publishedAt: string
+  title: string
+  description: string
 }
 
 interface GalleryApiItem {
@@ -15,6 +16,10 @@ interface GalleryApiItem {
   size: number
   lastModified: string
   etag: string
+  publisherName: string
+  publishedAt: string
+  title: string
+  description: string
 }
 
 interface GalleryResponse {
@@ -24,8 +29,6 @@ interface GalleryResponse {
 
 const INITIAL_ITEM_COUNT = 10
 const LOAD_MORE_COUNT = 8
-const artistNames = ['brow.archive', 'moodbrow', 'studio.oo', 'line.and.brow', 'browroom.seoul']
-const locations = ['Seongsu, Seoul', 'Hannam, Seoul', 'Yeonnam, Seoul', 'Gangnam, Seoul', 'Busan, Korea']
 
 const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL ?? import.meta.env.API_BASE_URL ?? '').replace(/\/$/, '')
 const GALLERY_API_URL = `${imageBaseUrl}/gallery`
@@ -48,6 +51,17 @@ function getImageUrl(imageUrl: string) {
 function getGalleryItemName(key: string) {
   const filename = key.split('/').pop() ?? key
   return filename.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')
+}
+
+function formatPublishedAt(publishedAt: string) {
+  const date = new Date(publishedAt)
+  if (Number.isNaN(date.getTime())) return publishedAt
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date)
 }
 
 function loadMoreItems() {
@@ -82,12 +96,13 @@ async function loadGalleryImages() {
     if (!response.ok) throw new Error(`Request failed: ${response.status}`)
 
     const payload = await response.json() as GalleryResponse
-    galleryItems.value = payload.items.map((item, index) => ({
+    galleryItems.value = payload.items.map(item => ({
       _id: `gallery-${item.key}`,
-      name: getGalleryItemName(item.key),
       imageUrl: item.url,
-      author: artistNames[index % artistNames.length]!,
-      location: locations[index % locations.length]!,
+      publisherName: item.publisherName,
+      publishedAt: item.publishedAt,
+      title: item.title || getGalleryItemName(item.key),
+      description: item.description,
     }))
     visibleCount.value = INITIAL_ITEM_COUNT
   } catch {
@@ -129,7 +144,7 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
         >
           <img
             :src="getImageUrl(item.imageUrl)"
-            :alt="`${item.name} 눈썹 디자인`"
+            :alt="item.title"
             class="brow-image"
             loading="lazy"
             decoding="async"
@@ -137,16 +152,17 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
           <div class="brow-card__shade"></div>
           <div class="brow-card__top">
             <span class="brow-card__index">{{ String(index + 1).padStart(2, '0') }}</span>
-            <button type="button" class="save-button" :aria-label="`${item.name} 저장`">
+            <button type="button" class="save-button" :aria-label="`${item.title} 저장`">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
             </button>
           </div>
           <div class="brow-card__caption">
-            <div class="artist-avatar">{{ item.author.slice(0, 1).toUpperCase() }}</div>
-            <div>
-              <strong>@{{ item.author }}</strong>
-              <span>{{ item.name }} · {{ item.location }}</span>
+            <div class="brow-card__meta">
+              <strong>{{ item.publisherName }}</strong>
+              <time :datetime="item.publishedAt">{{ formatPublishedAt(item.publishedAt) }}</time>
             </div>
+            <h2>{{ item.title }}</h2>
+            <p>{{ item.description }}</p>
           </div>
         </article>
       </div>
