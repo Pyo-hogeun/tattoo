@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 
 interface GalleryItem {
   _id: string
@@ -37,6 +37,7 @@ const visibleCount = ref(INITIAL_ITEM_COUNT)
 const isLoading = ref(true)
 const isLoadingMore = ref(false)
 const errorMessage = ref('')
+const selectedItem = ref<GalleryItem | null>(null)
 const loadMoreTrigger = useTemplateRef<HTMLElement>('loadMoreTrigger')
 let loadMoreObserver: IntersectionObserver | undefined
 
@@ -62,6 +63,25 @@ function formatPublishedAt(publishedAt: string) {
     month: '2-digit',
     day: '2-digit',
   }).format(date)
+}
+
+function openGalleryDetail(item: GalleryItem) {
+  selectedItem.value = item
+}
+
+function closeGalleryDetail() {
+  selectedItem.value = null
+}
+
+function handleDetailKeydown(event: KeyboardEvent, item: GalleryItem) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    openGalleryDetail(item)
+  }
+}
+
+function handleWindowKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') closeGalleryDetail()
 }
 
 function loadMoreItems() {
@@ -113,8 +133,17 @@ async function loadGalleryImages() {
   }
 }
 
-onMounted(loadGalleryImages)
-onBeforeUnmount(() => loadMoreObserver?.disconnect())
+watch(selectedItem, item => document.body.classList.toggle('detail-open', Boolean(item)))
+
+onMounted(() => {
+  loadGalleryImages()
+  window.addEventListener('keydown', handleWindowKeydown)
+})
+onBeforeUnmount(() => {
+  loadMoreObserver?.disconnect()
+  window.removeEventListener('keydown', handleWindowKeydown)
+  document.body.classList.remove('detail-open')
+})
 </script>
 
 <template>
@@ -141,6 +170,11 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
           :key="item._id"
           class="brow-card"
           :class="`brow-card--${index % 7}`"
+          role="button"
+          tabindex="0"
+          :aria-label="`${item.title} 상세 보기`"
+          @click="openGalleryDetail(item)"
+          @keydown="handleDetailKeydown($event, item)"
         >
           <img
             :src="getImageUrl(item.imageUrl)"
@@ -152,7 +186,7 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
           <div class="brow-card__shade"></div>
           <div class="brow-card__top">
             <span class="brow-card__index">{{ String(index + 1).padStart(2, '0') }}</span>
-            <button type="button" class="save-button" :aria-label="`${item.title} 저장`">
+            <button type="button" class="save-button" :aria-label="`${item.title} 저장`" @click.stop @keydown.stop>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
             </button>
           </div>
@@ -176,5 +210,44 @@ onBeforeUnmount(() => loadMoreObserver?.disconnect())
       </div>
     </template>
     <div v-else class="gallery-status">아직 등록된 이미지가 없어요.</div>
+
+    <Teleport to="body">
+      <div
+        v-if="selectedItem"
+        class="gallery-detail-backdrop"
+        role="presentation"
+        @click.self="closeGalleryDetail"
+      >
+        <article class="gallery-detail" role="dialog" aria-modal="true" :aria-labelledby="`detail-title-${selectedItem._id}`">
+          <header class="gallery-detail__mobile-header">
+            <button type="button" class="detail-back-button" aria-label="갤러리로 돌아가기" @click="closeGalleryDetail">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <strong>게시물</strong>
+          </header>
+          <div class="gallery-detail__visual">
+            <img :src="getImageUrl(selectedItem.imageUrl)" :alt="selectedItem.title">
+          </div>
+          <div class="gallery-detail__info">
+            <button type="button" class="detail-close-button" aria-label="상세 화면 닫기" @click="closeGalleryDetail">×</button>
+            <div class="detail-publisher">
+              <span>{{ selectedItem.publisherName.slice(0, 1) }}</span>
+              <div>
+                <strong>{{ selectedItem.publisherName }}</strong>
+                <time :datetime="selectedItem.publishedAt">{{ formatPublishedAt(selectedItem.publishedAt) }}</time>
+              </div>
+            </div>
+            <div class="detail-actions" aria-label="게시물 액션">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.8l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.5a5.5 5.5 0 0 0 0-7.8Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="detail-copy">
+              <h2 :id="`detail-title-${selectedItem._id}`">{{ selectedItem.title }}</h2>
+              <p>{{ selectedItem.description }}</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </Teleport>
   </section>
 </template>
