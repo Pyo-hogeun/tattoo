@@ -68,3 +68,14 @@ test('only manager users require a shop reference', async () => {
   await new User({ ...credentials, role: 'master' }).validate();
   await assert.rejects(new User({ ...credentials, role: 'manager' }).validate(), /shop/);
 });
+
+test('optional login identifiers use sparse unique indexes', () => {
+  const indexes = User.schema.indexes();
+  const kakaoIndex = indexes.find(([fields]) => fields.kakaoId === 1);
+  const loginIdIndex = indexes.find(([fields]) => fields.loginId === 1);
+
+  assert.equal(kakaoIndex?.[1].unique, true);
+  assert.equal(kakaoIndex?.[1].sparse, true);
+  assert.equal(loginIdIndex?.[1].unique, true);
+  assert.equal(loginIdIndex?.[1].sparse, true);
+});

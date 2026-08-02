@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
-  kakaoId: { type: String, unique: true, sparse: true, index: true },
-  loginId: { type: String, unique: true, sparse: true, index: true, trim: true, lowercase: true },
+  kakaoId: { type: String, unique: true, sparse: true },
+  loginId: { type: String, unique: true, sparse: true, trim: true, lowercase: true },
   passwordHash: { type: String, select: false },
   nickname: { type: String, trim: true },
   role: { type: String, enum: ['master', 'admin', 'manager'], default: 'manager', index: true },
