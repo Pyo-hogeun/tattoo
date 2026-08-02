@@ -132,7 +132,8 @@ NUXT_PUBLIC_ENABLE_TEST_AUTH=true
 
 활성화하면 `/signup`과 `/`에 테스트 전용 ID/PW 입력란이 표시되고
 `POST /api/auth/test/signup`, `POST /api/auth/test/login`을 사용할 수 있습니다. 테스트
-가입에도 매장명, 주소, 전화번호가 필요하며 선택한 역할로 계정이 생성됩니다. 비밀번호는
+가입에서 `manager`를 선택하면 매장명, 주소, 전화번호가 필요합니다. `admin` 또는 `master`는
+매장 정보를 입력하지 않아도 가입할 수 있으며 선택한 역할로 계정이 생성됩니다. 비밀번호는
 scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므로 **운영 환경에서는 두 값을
 반드시 `false`로 유지해야 합니다. 백엔드 API는 코드에서도 `NODE_ENV=production`일 때
 강제로 비활성화됩니다.

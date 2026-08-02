@@ -114,21 +114,23 @@ export const testSignUp = async (req, res, next) => {
       return res.status(400).json({ message: 'ID는 영문 소문자, 숫자, ., _, - 조합으로 4~40자여야 합니다.' });
     }
     if (!validateTestPassword(password)) return res.status(400).json({ message: '비밀번호는 8자 이상이어야 합니다.' });
-    if (![shopName, address, phone].every((value) => typeof value === 'string' && value.trim())) {
+    if (role === 'manager' && ![shopName, address, phone].every((value) => typeof value === 'string' && value.trim())) {
       return res.status(400).json({ message: '매장명, 주소, 전화번호는 필수입니다.' });
     }
     if (await User.exists({ loginId })) return res.status(409).json({ message: '이미 사용 중인 ID입니다.' });
 
-    shop = await Shop.create({
-      name: shopName.trim(), address: address.trim(), phone: phone.trim(),
-      dataSourceType: 'manual', sourceName: 'test-signup'
-    });
+    if (role === 'manager') {
+      shop = await Shop.create({
+        name: shopName.trim(), address: address.trim(), phone: phone.trim(),
+        dataSourceType: 'manual', sourceName: 'test-signup'
+      });
+    }
     const user = await User.create({
       loginId,
       passwordHash: await hashPassword(password),
       nickname: typeof nickname === 'string' ? nickname.trim() : loginId,
       role,
-      shop: shop._id
+      ...(shop ? { shop: shop._id } : {})
     });
     await user.populate('shop');
     res.status(201).json({ token: signToken(user), user: publicUser(user) });

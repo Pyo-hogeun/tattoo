@@ -6,7 +6,11 @@ const UserSchema = new mongoose.Schema({
   passwordHash: { type: String, select: false },
   nickname: { type: String, trim: true },
   role: { type: String, enum: ['master', 'admin', 'manager'], default: 'manager', index: true },
-  shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
+  shop: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Shop',
+    required() { return this.role === 'manager'; }
+  },
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 

@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 const config = useRuntimeConfig();
 const form = reactive({ shopName: '', address: '', phone: '' });
 const testForm = reactive({ loginId: '', password: '', nickname: '', role: 'manager' });
 const error = ref('');
 const isTestSigningUp = ref(false);
+const testAccountNeedsShop = computed(() => testForm.role === 'manager');
 const formatPhone = (value: string) => {
   const digits = value.replace(/\D/g, '').slice(0, 11);
   if (digits.startsWith('02')) {
@@ -34,7 +35,7 @@ const startKakao = () => {
 
 const signUpWithId = async () => {
   error.value = '';
-  if (!form.shopName.trim() || !form.address.trim() || !form.phone.trim()) { error.value = '매장 정보를 모두 입력해 주세요.'; return; }
+  if (testAccountNeedsShop.value && (!form.shopName.trim() || !form.address.trim() || !form.phone.trim())) { error.value = 'manager 계정은 매장 정보를 모두 입력해 주세요.'; return; }
   isTestSigningUp.value = true;
   try {
     const data: any = await $fetch(`${config.public.apiBase}/auth/test/signup`, {
@@ -71,6 +72,7 @@ const signUpWithId = async () => {
         <input v-model="testForm.password" required minlength="8" type="password" autocomplete="new-password" class="w-full rounded-lg border bg-white p-2.5 text-sm" placeholder="비밀번호 (8자 이상)" />
         <input v-model="testForm.nickname" class="w-full rounded-lg border bg-white p-2.5 text-sm" placeholder="닉네임 (선택)" />
         <select v-model="testForm.role" class="w-full rounded-lg border bg-white p-2.5 text-sm"><option value="manager">manager</option><option value="admin">admin</option><option value="master">master</option></select>
+        <p class="text-xs" :class="testAccountNeedsShop ? 'text-slate-600' : 'text-emerald-700'">{{ testAccountNeedsShop ? 'manager 계정은 위 매장명·주소·전화번호가 필요합니다.' : 'admin/master 계정은 매장 정보를 입력하지 않아도 가입할 수 있습니다.' }}</p>
         <button :disabled="isTestSigningUp" class="w-full rounded-lg bg-slate-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">{{ isTestSigningUp ? '가입 중…' : 'ID/PW 테스트 계정 만들기' }}</button>
       </form>
       <div class="mt-7 rounded-lg bg-slate-50 p-4 text-xs leading-6 text-slate-600"><b>권한 안내</b><br />manager: 본인 갤러리 등록·조회·편집<br />admin: 매장 목록 조회·매장정보 편집<br />master: 전체 관리 및 회원 권한 변경</div>
