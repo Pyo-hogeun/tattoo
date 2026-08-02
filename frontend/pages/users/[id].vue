@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import BackofficeLnb from '~/components/BackofficeLnb.vue';
+import BackofficeGnb from '~/components/BackofficeGnb.vue';
 import type { ManagedUser } from '~/types/user';
 
 const route = useRoute();
@@ -44,7 +45,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-7xl gap-6 p-6"><BackofficeLnb />
+  <div class="mx-auto flex max-w-7xl gap-6 p-6 pt-24"><BackofficeGnb /><BackofficeLnb />
     <main class="min-w-0 flex-1 rounded-xl border bg-white p-6 shadow-sm">
       <div class="mb-6 flex items-center justify-between"><div><NuxtLink to="/users" class="text-sm text-slate-500 hover:text-slate-900">← 사용자 목록</NuxtLink><h1 class="mt-2 text-xl font-bold">사용자 상세</h1></div></div>
       <p v-if="loading" class="py-12 text-center text-slate-500">사용자 정보를 불러오는 중입니다.</p>

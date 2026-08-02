@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import BackofficeGnb from '~/components/BackofficeGnb.vue';
 
 type GalleryItem = { _id: string; title: string; description?: string; imageUrl: string; updatedAt: string };
 type ManagerAccount = {
@@ -124,7 +125,8 @@ onBeforeUnmount(clearPreview);
 </script>
 
 <template>
-  <main class="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
+  <main class="min-h-screen bg-slate-50 px-4 pb-8 pt-24 sm:px-6">
+    <BackofficeGnb />
     <div class="mx-auto max-w-6xl">
       <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>

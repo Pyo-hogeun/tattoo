@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
 import BackofficeLnb from '~/components/BackofficeLnb.vue';
+import BackofficeGnb from '~/components/BackofficeGnb.vue';
 import type { ManagedUser } from '~/types/user';
 
 const config = useRuntimeConfig();
@@ -43,7 +44,8 @@ onMounted(() => fetchUsers());
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-7xl gap-6 p-6">
+  <div class="mx-auto flex max-w-7xl gap-6 p-6 pt-24">
+    <BackofficeGnb />
     <BackofficeLnb />
     <main class="min-w-0 flex-1 rounded-xl border bg-white p-6 shadow-sm">
       <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
