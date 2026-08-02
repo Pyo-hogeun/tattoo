@@ -3,11 +3,13 @@ import test from 'node:test';
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { env } from '../src/config/env.js';
 import { r2 } from '../src/config/r2.js';
+import { GalleryImage } from '../src/models/GalleryImage.js';
 import { listR2Gallery } from '../src/controllers/galleryController.js';
 
 test('listR2Gallery returns every paginated gallery object with a public URL', async (t) => {
   const originalEnv = { ...env };
   const originalSend = r2.send;
+  const originalFind = GalleryImage.find;
   Object.assign(env, {
     r2Endpoint: 'https://account.example.com',
     r2AccessKey: 'access',
@@ -18,7 +20,29 @@ test('listR2Gallery returns every paginated gallery object with a public URL', a
   t.after(() => {
     Object.assign(env, originalEnv);
     r2.send = originalSend;
+    GalleryImage.find = originalFind;
   });
+
+  const publishedAt = new Date('2026-01-15');
+  GalleryImage.find = (filter) => {
+    assert.deepEqual(filter, {
+      imageKey: { $in: ['gallery/older image.png', 'gallery/nested/new.webp'] },
+      isActive: true
+    });
+    return {
+      select: () => ({
+        populate: () => ({
+          lean: async () => [{
+            imageKey: 'gallery/nested/new.webp',
+            title: '자연 눈썹',
+            description: '자연스러운 작품입니다.',
+            shop: { name: '테스트 매장' },
+            createdAt: publishedAt
+          }]
+        })
+      })
+    };
+  };
 
   const commands = [];
   r2.send = async (command) => {
@@ -57,14 +81,22 @@ test('listR2Gallery returns every paginated gallery object with a public URL', a
         url: 'https://cdn.example.com/gallery/nested/new.webp',
         size: 34,
         lastModified: new Date('2026-02-01'),
-        etag: 'new'
+        etag: 'new',
+        publisherName: '테스트 매장',
+        publishedAt,
+        title: '자연 눈썹',
+        description: '자연스러운 작품입니다.'
       },
       {
         key: 'gallery/older image.png',
         url: 'https://cdn.example.com/gallery/older%20image.png',
         size: 12,
         lastModified: new Date('2026-01-01'),
-        etag: 'old'
+        etag: 'old',
+        publisherName: null,
+        publishedAt: null,
+        title: null,
+        description: null
       }
     ],
     total: 2

@@ -85,15 +85,31 @@ export const listR2Gallery = async (_req, res, next) => {
       }
     } while (continuationToken);
 
+    const imageKeys = objects
+      .map(({ Key }) => Key)
+      .filter((key) => key && key !== 'gallery/' && !key.endsWith('/'));
+    const galleryRecords = await GalleryImage.find({ imageKey: { $in: imageKeys }, isActive: true })
+      .select('imageKey title description shop createdAt')
+      .populate('shop', 'name')
+      .lean();
+    const galleryByKey = new Map(galleryRecords.map((record) => [record.imageKey, record]));
+
     const items = objects
       .filter(({ Key }) => Key && Key !== 'gallery/' && !Key.endsWith('/'))
-      .map(({ Key, Size, LastModified, ETag }) => ({
-        key: Key,
-        url: publicUrlForKey(Key),
-        size: Size ?? 0,
-        lastModified: LastModified,
-        etag: ETag?.replaceAll('"', '')
-      }))
+      .map(({ Key, Size, LastModified, ETag }) => {
+        const gallery = galleryByKey.get(Key);
+        return {
+          key: Key,
+          url: publicUrlForKey(Key),
+          size: Size ?? 0,
+          lastModified: LastModified,
+          etag: ETag?.replaceAll('"', ''),
+          publisherName: gallery?.shop?.name ?? null,
+          publishedAt: gallery?.createdAt ?? null,
+          title: gallery?.title ?? null,
+          description: gallery?.description ?? null
+        };
+      })
       .sort((a, b) => new Date(b.lastModified || 0) - new Date(a.lastModified || 0));
 
     res.json({ items, total: items.length });

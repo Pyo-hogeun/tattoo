@@ -120,7 +120,7 @@ export const openapiDocument = {
     '/api/gallery': {
       get: {
         tags: ['Gallery'], summary: 'R2 갤러리 이미지 전체 조회',
-        description: 'Cloudflare R2 버킷의 gallery/ 접두사 아래에 있는 모든 파일을 최신 수정 순으로 반환합니다.',
+        description: 'Cloudflare R2 버킷의 gallery/ 접두사 아래에 있는 모든 파일을 최신 수정 순으로 반환하며, DB에 등록된 파일은 매장명과 게시 정보를 포함합니다.',
         responses: {
           200: { description: '갤러리 이미지 목록', content: { 'application/json': { schema: { $ref: '#/components/schemas/R2GalleryList' } } } },
           503: errorResponse('R2 환경 변수 미설정'),
@@ -156,7 +156,7 @@ export const openapiDocument = {
       BrowShapeInput: { type: 'object', required: ['name', 'imageUrl'], properties: browShapeProperties },
       BrowShapeMultipartInput: { type: 'object', required: ['name'], properties: { name: browShapeProperties.name, imageUrl: browShapeProperties.imageUrl, description: browShapeProperties.description, isActive: { type: 'boolean', default: true }, image: { type: 'string', format: 'binary', description: 'JPEG, PNG, WebP 또는 GIF (최대 10MB)' } } },
       BrowShapeList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/BrowShape' } }, total: { type: 'integer' } } },
-      R2GalleryImage: { type: 'object', required: ['key', 'url', 'size'], properties: { key: { type: 'string', example: 'gallery/example.webp' }, url: { type: 'string', format: 'uri' }, size: { type: 'integer', minimum: 0, description: '파일 크기(byte)' }, lastModified: { type: 'string', format: 'date-time' }, etag: { type: 'string' } } },
+      R2GalleryImage: { type: 'object', required: ['key', 'url', 'size', 'publisherName', 'publishedAt', 'title', 'description'], properties: { key: { type: 'string', example: 'gallery/example.webp' }, url: { type: 'string', format: 'uri' }, size: { type: 'integer', minimum: 0, description: '파일 크기(byte)' }, lastModified: { type: 'string', format: 'date-time' }, etag: { type: 'string' }, publisherName: { type: 'string', nullable: true, description: '게시 매장명' }, publishedAt: { type: 'string', format: 'date-time', nullable: true, description: '게시일' }, title: { type: 'string', nullable: true, description: '작품 제목' }, description: { type: 'string', nullable: true, description: '작품 설명' } } },
       R2GalleryList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/R2GalleryImage' } }, total: { type: 'integer' } } },
       TestLoginInput: { type: 'object', required: ['loginId', 'password'], properties: { loginId: { type: 'string', minLength: 4, maxLength: 40 }, password: { type: 'string', minLength: 8 } } },
       TestSignUpInput: { type: 'object', required: ['loginId', 'password', 'shopName', 'address', 'phone'], properties: { loginId: { type: 'string', pattern: '^[a-z0-9._-]{4,40}$' }, password: { type: 'string', minLength: 8 }, nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'], default: 'manager' }, shopName: { type: 'string' }, address: { type: 'string' }, phone: { type: 'string' } } }
