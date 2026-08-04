@@ -3,11 +3,16 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, wa
 
 interface GalleryItem {
   _id: string
+  key: string
   imageUrl: string
   publisherName: string
   publishedAt: string
   title: string
   description: string
+  liked: boolean
+  scrapped: boolean
+  likeCount: number
+  scrapCount: number
 }
 
 interface GalleryApiItem {
@@ -20,11 +25,22 @@ interface GalleryApiItem {
   publishedAt: string
   title: string
   description: string
+  liked?: boolean
+  scrapped?: boolean
+  likeCount?: number
+  scrapCount?: number
 }
 
 interface GalleryResponse {
   items: GalleryApiItem[]
   total: number
+}
+
+interface GalleryInteractionResponse {
+  liked: boolean
+  scrapped: boolean
+  likeCount: number
+  scrapCount: number
 }
 
 const INITIAL_ITEM_COUNT = 10
@@ -38,8 +54,11 @@ const isLoading = ref(true)
 const isLoadingMore = ref(false)
 const errorMessage = ref('')
 const selectedItem = ref<GalleryItem | null>(null)
+const pendingActions = ref(new Set<string>())
+const actionMessage = ref('')
 const loadMoreTrigger = useTemplateRef<HTMLElement>('loadMoreTrigger')
 let loadMoreObserver: IntersectionObserver | undefined
+let actionMessageTimer: number | undefined
 
 const visibleItems = computed(() => galleryItems.value.slice(0, visibleCount.value))
 const hasMoreItems = computed(() => visibleCount.value < galleryItems.value.length)
@@ -71,6 +90,76 @@ function openGalleryDetail(item: GalleryItem) {
 
 function closeGalleryDetail() {
   selectedItem.value = null
+}
+
+function setActionMessage(message: string) {
+  actionMessage.value = message
+  window.clearTimeout(actionMessageTimer)
+  actionMessageTimer = window.setTimeout(() => {
+    actionMessage.value = ''
+  }, 2400)
+}
+
+function isActionPending(item: GalleryItem, action: 'like' | 'scrap') {
+  return pendingActions.value.has(`${item.key}:${action}`)
+}
+
+async function toggleGalleryInteraction(item: GalleryItem, action: 'like' | 'scrap') {
+  const pendingKey = `${item.key}:${action}`
+  if (pendingActions.value.has(pendingKey)) return
+
+  const active = action === 'like' ? !item.liked : !item.scrapped
+  pendingActions.value = new Set(pendingActions.value).add(pendingKey)
+
+  try {
+    const response = await fetch(`${GALLERY_API_URL}/interactions`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: item.key, action, active }),
+    })
+
+    if (response.status === 401) {
+      setActionMessage('로그인 후 저장할 수 있어요.')
+      return
+    }
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`)
+
+    const result = await response.json() as GalleryInteractionResponse
+    item.liked = result.liked
+    item.scrapped = result.scrapped
+    item.likeCount = result.likeCount
+    item.scrapCount = result.scrapCount
+    setActionMessage(action === 'like'
+      ? (item.liked ? '좋아요에 저장했어요.' : '좋아요를 취소했어요.')
+      : (item.scrapped ? '스크랩에 저장했어요.' : '스크랩을 취소했어요.'))
+  } catch {
+    setActionMessage('요청을 처리하지 못했어요. 다시 시도해 주세요.')
+  } finally {
+    const nextPendingActions = new Set(pendingActions.value)
+    nextPendingActions.delete(pendingKey)
+    pendingActions.value = nextPendingActions
+  }
+}
+
+async function shareGalleryItem(item: GalleryItem) {
+  const shareData = {
+    title: item.title,
+    text: `${item.publisherName} · ${item.description}`,
+    url: getImageUrl(item.imageUrl),
+  }
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData)
+    } else {
+      await navigator.clipboard.writeText(shareData.url)
+      setActionMessage('사진 링크를 복사했어요.')
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return
+    setActionMessage('공유 링크를 만들지 못했어요.')
+  }
 }
 
 function handleDetailKeydown(event: KeyboardEvent, item: GalleryItem) {
@@ -112,17 +201,22 @@ async function loadGalleryImages() {
   errorMessage.value = ''
 
   try {
-    const response = await fetch(GALLERY_API_URL)
+    const response = await fetch(GALLERY_API_URL, { credentials: 'include' })
     if (!response.ok) throw new Error(`Request failed: ${response.status}`)
 
     const payload = await response.json() as GalleryResponse
     galleryItems.value = payload.items.map(item => ({
       _id: `gallery-${item.key}`,
+      key: item.key,
       imageUrl: item.url,
       publisherName: item.publisherName,
       publishedAt: item.publishedAt,
       title: item.title || getGalleryItemName(item.key),
       description: item.description,
+      liked: item.liked ?? false,
+      scrapped: item.scrapped ?? false,
+      likeCount: item.likeCount ?? 0,
+      scrapCount: item.scrapCount ?? 0,
     }))
     visibleCount.value = INITIAL_ITEM_COUNT
   } catch {
@@ -143,6 +237,7 @@ onBeforeUnmount(() => {
   loadMoreObserver?.disconnect()
   window.removeEventListener('keydown', handleWindowKeydown)
   document.body.classList.remove('detail-open')
+  window.clearTimeout(actionMessageTimer)
 })
 </script>
 
@@ -186,8 +281,17 @@ onBeforeUnmount(() => {
           <div class="brow-card__shade"></div>
           <div class="brow-card__top">
             <span class="brow-card__index">{{ String(index + 1).padStart(2, '0') }}</span>
-            <button type="button" class="save-button" :aria-label="`${item.title} 저장`" @click.stop @keydown.stop>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            <button
+              type="button"
+              class="save-button"
+              :class="{ active: item.scrapped }"
+              :aria-label="item.scrapped ? `${item.title} 스크랩 취소` : `${item.title} 스크랩`"
+              :aria-pressed="item.scrapped"
+              :disabled="isActionPending(item, 'scrap')"
+              @click.stop="toggleGalleryInteraction(item, 'scrap')"
+              @keydown.stop
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" :fill="item.scrapped ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
             </button>
           </div>
           <div class="brow-card__caption">
@@ -238,8 +342,32 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="detail-actions" aria-label="게시물 액션">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.8l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.5a5.5 5.5 0 0 0 0-7.8Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+              <button
+                type="button"
+                :class="{ active: selectedItem.liked }"
+                :aria-label="selectedItem.liked ? '좋아요 취소' : '좋아요'"
+                :aria-pressed="selectedItem.liked"
+                :disabled="isActionPending(selectedItem, 'like')"
+                @click="toggleGalleryInteraction(selectedItem, 'like')"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.8l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.5a5.5 5.5 0 0 0 0-7.8Z" :fill="selectedItem.liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5"/></svg>
+                <span>{{ selectedItem.likeCount }}</span>
+              </button>
+              <button type="button" aria-label="게시물 공유" @click="shareGalleryItem(selectedItem)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.1-7.3L3 10.6 21 3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m10.3 13.7 4.2-4.2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+              </button>
+              <button
+                type="button"
+                class="detail-scrap-button"
+                :class="{ active: selectedItem.scrapped }"
+                :aria-label="selectedItem.scrapped ? '스크랩 취소' : '스크랩'"
+                :aria-pressed="selectedItem.scrapped"
+                :disabled="isActionPending(selectedItem, 'scrap')"
+                @click="toggleGalleryInteraction(selectedItem, 'scrap')"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" :fill="selectedItem.scrapped ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                <span>{{ selectedItem.scrapCount }}</span>
+              </button>
             </div>
             <div class="detail-copy">
               <h2 :id="`detail-title-${selectedItem._id}`">{{ selectedItem.title }}</h2>
@@ -248,6 +376,7 @@ onBeforeUnmount(() => {
           </div>
         </article>
       </div>
+      <p v-if="actionMessage" class="gallery-action-message" role="status">{{ actionMessage }}</p>
     </Teleport>
   </section>
 </template>
