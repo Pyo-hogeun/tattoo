@@ -3,8 +3,11 @@ import type { Component } from 'vue'
 import GalleryPage from '../views/GalleryPage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import SettingPage from '../views/SettingPage.vue'
+import LoginPage from '../views/LoginPage.vue'
+import AuthCallbackPage from '../views/AuthCallbackPage.vue'
+import UploadPage from '../views/UploadPage.vue'
 
-export type RouteName = 'gallery' | 'profile' | 'setting'
+export type RouteName = 'gallery' | 'profile' | 'setting' | 'login' | 'auth-callback' | 'upload'
 
 type Route = {
   name: RouteName
@@ -16,11 +19,17 @@ type Route = {
 export const routes: Route[] = [
   { name: 'gallery', label: 'Gallery', path: '/', component: GalleryPage },
   { name: 'profile', label: 'Profile', path: '/profile', component: ProfilePage },
+  { name: 'upload', label: 'Upload', path: '/upload', component: UploadPage },
   { name: 'setting', label: 'Setting', path: '/setting', component: SettingPage },
 ]
 
+const systemRoutes: Route[] = [
+  { name: 'login', label: 'Login', path: '/login', component: LoginPage },
+  { name: 'auth-callback', label: 'Auth callback', path: '/auth/callback', component: AuthCallbackPage },
+]
+
 function resolveRoute(pathname: string): Route {
-  return routes.find((route) => route.path === pathname) ?? routes[0]
+  return [...routes, ...systemRoutes].find((route) => route.path === pathname) ?? routes[0]
 }
 
 export const currentRoute = shallowRef<Route>(resolveRoute(window.location.pathname))

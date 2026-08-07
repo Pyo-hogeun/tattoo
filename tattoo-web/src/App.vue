@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { currentRoute, navigate, routes } from './router'
+import { account, loadCurrentAccount, logout } from './services/auth'
 
 const activeRoute = computed(() => currentRoute.value)
 
@@ -10,6 +11,18 @@ function handleNavigation(event: MouseEvent, path: string) {
   event.preventDefault()
   navigate(path)
 }
+
+async function handleAccountAction() {
+  if (!account.value) {
+    navigate('/login')
+    return
+  }
+
+  await logout()
+  navigate('/')
+}
+
+onMounted(loadCurrentAccount)
 </script>
 
 <template>
@@ -32,12 +45,16 @@ function handleNavigation(event: MouseEvent, path: string) {
         >
           <svg v-if="route.name === 'gallery'" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.2" cy="8.2" r="1.4" fill="currentColor"/><path d="m5 18 4.3-4.4 3.1 2.7 2.2-2.2L19 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <svg v-else-if="route.name === 'profile'" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5.1 20c.7-3.6 3.3-5.6 6.9-5.6s6.2 2 6.9 5.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <svg v-else-if="route.name === 'upload'" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <svg v-else viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M19.1 13.5a7.4 7.4 0 0 0 .1-1.5 7.4 7.4 0 0 0-.1-1.5l2-1.5-2-3.4-2.4 1a7.4 7.4 0 0 0-2.6-1.5L13.8 2h-3.9l-.3 3.1a7.4 7.4 0 0 0-2.6 1.5l-2.4-1-2 3.4 2 1.5A7.4 7.4 0 0 0 4.5 12c0 .5 0 1 .1 1.5l-2 1.5 2 3.4 2.4-1a7.4 7.4 0 0 0 2.6 1.5l.3 3.1h3.9l.3-3.1a7.4 7.4 0 0 0 2.6-1.5l2.4 1 2-3.4-2-1.5Z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/></svg>
           <span>{{ route.label }}</span>
         </a>
       </nav>
 
-      <button class="menu-button" aria-label="Open menu"><span></span><span></span></button>
+      <button class="account-button" type="button" @click="handleAccountAction">
+        <img v-if="account?.profileImageUrl" :src="account.profileImageUrl" alt="">
+        <span>{{ account ? account.nickname : 'Login' }}</span>
+      </button>
     </header>
 
     <component :is="activeRoute.component" />
