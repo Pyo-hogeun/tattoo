@@ -6,7 +6,7 @@ export interface Account {
   profileImageUrl?: string
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_IMAGE_BASE_URL ?? '').replace(/\/$/, '')
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
 const currentAccount = ref<Account | null>(null)
 const isAuthLoading = ref(false)
 let hasLoadedAccount = false

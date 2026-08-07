@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { apiBaseUrl } from '../services/auth'
 
 interface GalleryItem {
   _id: string
@@ -46,8 +47,8 @@ interface GalleryInteractionResponse {
 const INITIAL_ITEM_COUNT = 10
 const LOAD_MORE_COUNT = 8
 
-const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL ?? import.meta.env.API_BASE_URL ?? '').replace(/\/$/, '')
-const GALLERY_API_URL = `${imageBaseUrl}/gallery`
+const imageBaseUrl = (import.meta.env.VITE_IMAGE_BASE_URL || apiBaseUrl).replace(/\/$/, '')
+const GALLERY_API_URL = `${apiBaseUrl}/gallery`
 const galleryItems = ref<GalleryItem[]>([])
 const visibleCount = ref(INITIAL_ITEM_COUNT)
 const isLoading = ref(true)

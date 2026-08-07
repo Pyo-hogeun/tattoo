@@ -39,3 +39,14 @@ Kakao OAuth secrets and the authorization-code exchange must remain on the backe
 - `POST /gallery`: authenticated multipart upload with `image`, `title`, and `description`; return `401` when signed out.
 
 The backend account table should uniquely link the Kakao provider user ID to one local account. Do not send a Kakao REST API key, client secret, authorization code, or access token to this SPA. For cross-origin development, allow the configured web origin, credentials, and the required methods/headers; the session cookie must use the deployment-appropriate `Secure` and `SameSite` attributes.
+
+## API proxy and CORS
+
+The browser calls the same-origin `/api` path by default. During `vite` development and preview, `vite.config.ts` proxies that path to `VITE_API_PROXY_TARGET` and removes the `/api` prefix before forwarding it. For example, a browser request to `/api/gallery` is forwarded to `http://localhost:4000/gallery`. This avoids browser CORS preflights during local development and keeps credentialed session requests on the web origin.
+
+```env
+VITE_API_BASE_URL=/api
+VITE_API_PROXY_TARGET=http://localhost:4000
+```
+
+Production hosting must provide the equivalent reverse proxy (`/api/*` to the backend) because the Vite development proxy is not part of the production bundle. If production intentionally calls the backend origin directly instead, the backend must return an explicit `Access-Control-Allow-Origin` matching the web origin (not `*` when credentials are used), `Access-Control-Allow-Credentials: true`, and accept the required methods and headers. A successful backend response can still be blocked by the browser when these CORS headers are absent or invalid.
