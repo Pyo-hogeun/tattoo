@@ -12,12 +12,7 @@ function handleNavigation(event: MouseEvent, path: string) {
   navigate(path)
 }
 
-async function handleAccountAction() {
-  if (!customerUser.value) {
-    navigate('/signup')
-    return
-  }
-
+function handleLogout() {
   clearCustomerSession()
   navigate('/')
 }
@@ -51,9 +46,19 @@ onMounted(restoreCustomerSession)
         </a>
       </nav>
 
-      <button class="account-button" type="button" @click="handleAccountAction">
-        <span>{{ customerUser ? customerUser.nickname : 'Sign up' }}</span>
-      </button>
+      <div class="account-area">
+        <button v-if="!customerUser" class="account-button" type="button" @click="navigate('/signup')">
+          <span>Sign up</span>
+        </button>
+        <template v-else>
+          <div class="signed-in-account" :aria-label="`${customerUser.nickname} 일반 회원으로 로그인 중`">
+            <span class="account-avatar" aria-hidden="true">{{ customerUser.nickname.slice(0, 1) }}</span>
+            <span class="account-copy"><strong>{{ customerUser.nickname }}</strong><small>일반 회원 로그인</small></span>
+            <span class="account-online" aria-hidden="true"></span>
+          </div>
+          <button type="button" class="logout-button" @click="handleLogout">로그아웃</button>
+        </template>
+      </div>
     </header>
 
     <component :is="activeRoute.component" />

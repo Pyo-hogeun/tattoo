@@ -20,6 +20,15 @@ nav { display: flex; align-items: stretch; height: 88px; }
 .account-button { justify-self: end; max-width: 130px; height: 36px; padding: 0 13px; display: flex; align-items: center; gap: 7px; overflow: hidden; border: 1px solid #b8b5ac; border-radius: 20px; color: #34332f; background: transparent; cursor: pointer; }
 .account-button img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
 .account-button span { overflow: hidden; font: 9px 'DM Mono', monospace; text-overflow: ellipsis; white-space: nowrap; }
+.account-area { justify-self: end; display: flex; align-items: center; gap: 9px; }
+.signed-in-account { min-width: 162px; height: 42px; padding: 0 11px 0 5px; display: flex; align-items: center; gap: 8px; border: 1px solid #b8b5ac; border-radius: 24px; background: rgba(255,255,255,.2); }
+.account-avatar { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #f4f0e7; background: #292824; font: 500 11px 'DM Mono', monospace; }
+.account-copy { min-width: 0; display: grid; gap: 2px; }
+.account-copy strong { overflow: hidden; max-width: 84px; color: #282722; font-size: 10px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.account-copy small { color: #817d75; font: 7px 'DM Mono', monospace; white-space: nowrap; }
+.account-online { width: 6px; height: 6px; flex: none; margin-left: auto; border-radius: 50%; background: #4f9e68; box-shadow: 0 0 0 2px rgba(79,158,104,.16); }
+.logout-button { padding: 7px 3px; border: 0; color: #77736b; background: transparent; cursor: pointer; font: 8px 'DM Mono', monospace; }
+.logout-button:hover { color: #292824; text-decoration: underline; }
 .container { max-width: 1440px; margin: 0 auto; padding: 33px 4.3vw 27px; }
 .eyebrow, .kicker, .page-footer { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .02em; text-transform: uppercase; }.eyebrow { display: flex; align-items: center; gap: 9px; color: #4b4a46; }.eyebrow span { width: 6px; height: 6px; border-radius: 50%; background: #e85836; }
 .title-row { display: flex; align-items: end; justify-content: space-between; gap: 40px; margin: 44px 0 46px; }.kicker { color: #77756e; margin: 0 0 8px; }.title-row h1 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(58px, 8.8vw, 132px); font-weight: 600; line-height: .79; letter-spacing: -.075em; margin: 0; }.title-row h1 em { font-weight: 600; margin-left: 1.02em; }.intro { width: 245px; color: #53514c; font-size: 13px; line-height: 1.5; margin: 0 1.3vw 8px 0; }
@@ -186,6 +195,12 @@ nav { display: flex; align-items: stretch; height: 88px; }
 @media (max-width: 700px) {
   .account-button { width: 34px; height: 34px; padding: 0; justify-content: center; }
   .account-button span { display: none; }
+  .account-area { gap: 0; }
+  .signed-in-account { position: relative; min-width: 34px; width: 34px; height: 34px; padding: 0; border: 0; background: transparent; }
+  .account-avatar { width: 32px; height: 32px; }
+  .account-copy { display: none; }
+  .account-online { position: absolute; right: 0; bottom: 0; margin: 0; border: 1px solid #ebe9e3; }
+  .logout-button { display: none; }
   .auth-page { min-height: calc(100svh - 71px); display: block; }
   .auth-visual { min-height: 34svh; padding: 25px 20px; }
   .auth-visual strong { font-size: 44px; }
