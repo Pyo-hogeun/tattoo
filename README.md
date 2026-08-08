@@ -158,6 +158,15 @@ scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므
 프로필 메뉴의 로그아웃을 선택하면 브라우저에 저장된 인증 토큰과 사용자 정보를 삭제하고 로그인
 화면으로 이동합니다.
 
+### 일반 사용자 카카오 회원가입
+
+`/user/signup`은 매장 관리자를 위한 `/signup`과 분리된 일반 사용자 회원가입 화면입니다.
+매장명·주소·전화번호를 입력하지 않고 카카오 인증과 필수 안내 동의만으로 가입하며,
+`POST /api/auth/kakao/user/signup`을 호출해 별도의 `Customer` 컬렉션에 저장합니다. 동일한 카카오
+계정이 일반 사용자와 매장 파트너 계정으로 각각 가입할 수 있습니다. 일반 사용자 인증 결과는
+백오피스의 `auth_token`, `auth_user`와 섞이지 않도록 `customer_auth_token`,
+`customer_auth_user` 키에 저장합니다.
+
 manager가 갤러리에서 업로드한 JPG, PNG, WEBP, GIF 파일은 `/brow-shapes/manage`의 이미지와
 동일한 Cloudflare R2 버킷에 `gallery/...` 키로 저장됩니다. 파일당 최대 크기는 10MB입니다.
 백엔드 `.env`에 `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`, `R2_BUCKET`,

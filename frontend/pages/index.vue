@@ -99,6 +99,7 @@ onMounted(() => {
           <div class="my-7 flex items-center gap-3 text-xs text-slate-400"><span class="h-px flex-1 bg-slate-200" />아직 파트너가 아니신가요?<span class="h-px flex-1 bg-slate-200" /></div>
           <NuxtLink to="/signup" class="block w-full rounded-xl border-2 border-slate-900 px-4 py-3 text-center font-semibold text-slate-900 transition hover:bg-slate-50">매장 회원가입</NuxtLink>
           <p class="mt-4 text-center text-xs leading-5 text-slate-400">회원가입 시 매장명, 주소, 전화번호가 필요합니다.</p>
+          <NuxtLink to="/user/signup" class="mt-5 block text-center text-sm font-medium text-amber-700 underline underline-offset-4">매장 관리가 아닌 일반 사용자 회원가입</NuxtLink>
         </template>
       </div>
     </section>

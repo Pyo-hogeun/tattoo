@@ -1,6 +1,7 @@
 import { env } from '../config/env.js';
 import { Shop } from '../models/Shop.js';
 import { User } from '../models/User.js';
+import { Customer } from '../models/Customer.js';
 import { signToken } from '../utils/token.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 
@@ -86,6 +87,22 @@ export const kakaoSignUp = async (req, res, next) => {
       await Shop.findByIdAndDelete(shop._id);
       throw error;
     }
+  } catch (error) { next(error); }
+};
+
+export const kakaoCustomerSignUp = async (req, res, next) => {
+  try {
+    const profile = await getKakaoProfile(req.body);
+    const kakaoId = String(profile.id);
+    if (await Customer.exists({ kakaoId })) {
+      return res.status(409).json({ message: '이미 가입한 일반 사용자 카카오 계정입니다.' });
+    }
+    const customer = await Customer.create({
+      kakaoId,
+      nickname: profile.properties?.nickname || profile.kakao_account?.profile?.nickname || '사용자'
+    });
+    const user = { id: customer.id, nickname: customer.nickname, role: 'user' };
+    res.status(201).json({ token: signToken(user), user });
   } catch (error) { next(error); }
 };
 

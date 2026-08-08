@@ -136,6 +136,13 @@ export const openapiDocument = {
         responses: { 201: { description: '가입 및 로그인 완료' }, 400: errorResponse('입력값 오류'), 404: errorResponse('테스트 인증 비활성화'), 409: errorResponse('중복 ID 또는 매장') }
       }
     },
+    '/api/auth/kakao/user/signup': {
+      post: {
+        tags: ['Auth'], summary: '일반 사용자 카카오 회원가입',
+        description: '매장 파트너 회원가입과 분리된 일반 사용자 계정을 생성합니다. 매장 정보는 필요하지 않습니다.',
+        responses: { 201: { description: '일반 사용자 가입 완료' }, 400: errorResponse('카카오 인증 오류'), 409: errorResponse('이미 가입한 일반 사용자') }
+      }
+    },
     '/api/auth/test/login': {
       post: {
         tags: ['Auth'], summary: '테스트 전용 ID/PW 로그인',
