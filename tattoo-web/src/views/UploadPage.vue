@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { account, apiBaseUrl, loadCurrentAccount, startKakaoLogin } from '../services/auth'
+import { apiBaseUrl } from '../services/auth'
+import { customerUser, getCustomerAuthorizationHeaders, restoreCustomerSession } from '../services/customerAuth'
 import { navigate } from '../router'
 
 const title = ref('')
@@ -13,7 +14,7 @@ const errorMessage = ref('')
 const canSubmit = computed(() => Boolean(imageFile.value && title.value.trim() && description.value.trim()) && !isSubmitting.value)
 
 onMounted(async () => {
-  await loadCurrentAccount()
+  restoreCustomerSession()
   isCheckingAccount.value = false
 })
 
@@ -44,8 +45,8 @@ function selectImage(event: Event) {
 }
 
 async function submitPost() {
-  if (!account.value) {
-    startKakaoLogin('/upload')
+  if (!customerUser.value) {
+    navigate('/signup')
     return
   }
   if (!canSubmit.value || !imageFile.value) return
@@ -61,10 +62,11 @@ async function submitPost() {
     const response = await fetch(`${apiBaseUrl}/gallery`, {
       method: 'POST',
       credentials: 'include',
+      headers: getCustomerAuthorizationHeaders(),
       body: formData,
     })
     if (response.status === 401) {
-      startKakaoLogin('/upload')
+      navigate('/signup')
       return
     }
     if (!response.ok) throw new Error(`Request failed: ${response.status}`)
@@ -80,11 +82,11 @@ async function submitPost() {
 <template>
   <section class="upload-page">
     <div v-if="isCheckingAccount" class="upload-gate" role="status"><span class="loading-mark"></span>계정을 확인하고 있어요…</div>
-    <div v-else-if="!account" class="upload-gate">
+    <div v-else-if="!customerUser" class="upload-gate">
       <p class="auth-kicker">Members only</p>
       <h1>로그인하고<br>당신의 무드를 공유하세요.</h1>
       <p>일반 회원도 카카오 계정으로 가입한 뒤 갤러리에 게시물을 올릴 수 있어요.</p>
-      <button type="button" class="kakao-login-button" @click="startKakaoLogin('/upload')">카카오로 시작하기</button>
+      <button type="button" class="kakao-login-button" @click="navigate('/signup')">일반 사용자 회원가입</button>
     </div>
     <form v-else class="upload-form" @submit.prevent="submitPost">
       <header>
@@ -92,7 +94,7 @@ async function submitPost() {
           <p class="auth-kicker">New post</p>
           <h1>새로운 무드 공유하기</h1>
         </div>
-        <span>{{ account.nickname }} 님</span>
+        <span>{{ customerUser.nickname }} 님</span>
       </header>
 
       <div class="upload-layout">

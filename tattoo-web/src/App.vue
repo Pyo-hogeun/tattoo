@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { currentRoute, navigate, routes } from './router'
-import { account, loadCurrentAccount, logout } from './services/auth'
+import { clearCustomerSession, customerUser, restoreCustomerSession } from './services/customerAuth'
 
 const activeRoute = computed(() => currentRoute.value)
 
@@ -13,16 +13,16 @@ function handleNavigation(event: MouseEvent, path: string) {
 }
 
 async function handleAccountAction() {
-  if (!account.value) {
-    navigate('/login')
+  if (!customerUser.value) {
+    navigate('/signup')
     return
   }
 
-  await logout()
+  clearCustomerSession()
   navigate('/')
 }
 
-onMounted(loadCurrentAccount)
+onMounted(restoreCustomerSession)
 </script>
 
 <template>
@@ -52,8 +52,7 @@ onMounted(loadCurrentAccount)
       </nav>
 
       <button class="account-button" type="button" @click="handleAccountAction">
-        <img v-if="account?.profileImageUrl" :src="account.profileImageUrl" alt="">
-        <span>{{ account ? account.nickname : 'Login' }}</span>
+        <span>{{ customerUser ? customerUser.nickname : 'Sign up' }}</span>
       </button>
     </header>
 

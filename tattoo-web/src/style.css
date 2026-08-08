@@ -142,10 +142,25 @@ nav { display: flex; align-items: stretch; height: 88px; }
 .auth-panel h1, .upload-gate h1 { margin: 0; font: 600 clamp(36px, 4vw, 58px)/1.05 'Playfair Display', Georgia, serif; letter-spacing: -.045em; }
 .auth-description, .upload-gate > p:not(.auth-kicker) { margin: 26px 0 34px; color: #625f58; font-size: 13px; line-height: 1.7; }
 .kakao-login-button { min-height: 52px; padding: 0 20px; display: flex; justify-content: center; align-items: center; gap: 9px; border: 0; border-radius: 3px; color: #191919; background: #fee500; cursor: pointer; font-size: 14px; font-weight: 500; }
+.kakao-login-button:disabled { cursor: wait; opacity: .62; }
+.kakao-login-button:focus-visible, .auth-return-button:focus-visible, .privacy-agreement input:focus-visible { outline: 2px solid #e85836; outline-offset: 3px; }
 .kakao-login-button svg { width: 22px; height: 22px; }
 .auth-terms { margin: 16px 0 0; color: #918d84; font-size: 9px; line-height: 1.55; text-align: center; }
-.auth-callback { min-height: calc(100svh - 88px); display: grid; place-content: center; justify-items: center; gap: 16px; text-align: center; }
+.privacy-agreement { margin: 0 0 20px; padding: 15px; display: flex; align-items: flex-start; gap: 10px; border: 1px solid #c8c4ba; color: #5e5a53; cursor: pointer; font-size: 11px; line-height: 1.5; }
+.privacy-agreement input { flex: none; width: 16px; height: 16px; margin: 0; accent-color: #292824; }
+.privacy-agreement strong { color: #292824; font-weight: 500; }
+.auth-error { margin: 0 0 14px; color: #b33b28; font-size: 11px; line-height: 1.5; }
+.auth-callback { min-height: calc(100svh - 88px); padding: 30px; display: grid; place-content: center; justify-items: center; gap: 16px; text-align: center; }
 .auth-callback h1 { margin: 0; font: 600 42px 'Playfair Display', Georgia, serif; }
+.auth-callback p { max-width: 520px; margin: 0; color: #666159; font-size: 13px; line-height: 1.6; }
+.auth-return-button { min-width: 220px; margin-top: 10px; padding: 15px 20px; color: #fff; background: #292824; text-decoration: none; }
+.auth-result-icon { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #292824; font-size: 25px; }
+.auth-result-icon--error { background: #b33b28; }
+.signup-complete { min-height: calc(100svh - 88px); padding: 40px 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+.signup-complete h1 { margin: 12px 0 22px; font: 600 clamp(45px, 6vw, 76px)/.95 'Playfair Display', Georgia, serif; letter-spacing: -.055em; }
+.signup-complete > p:not(.auth-kicker) { margin: 0 0 30px; color: #666159; font-size: 13px; line-height: 1.7; }
+.signup-complete > p strong { color: #292824; }
+.signup-complete .publish-button { width: min(320px, 100%); padding: 0 20px; }
 .upload-page { min-height: calc(100svh - 88px); padding: clamp(30px, 5vw, 72px); }
 .upload-gate { min-height: calc(100svh - 230px); max-width: 620px; margin: auto; display: flex; flex-direction: column; justify-content: center; }
 .upload-form { max-width: 1120px; margin: auto; }

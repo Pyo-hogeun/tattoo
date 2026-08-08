@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { apiBaseUrl } from '../services/auth'
+import { getCustomerAuthorizationHeaders, restoreCustomerSession } from '../services/customerAuth'
 
 interface GalleryItem {
   _id: string
@@ -116,7 +117,7 @@ async function toggleGalleryInteraction(item: GalleryItem, action: 'like' | 'scr
     const response = await fetch(`${GALLERY_API_URL}/interactions`, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCustomerAuthorizationHeaders() },
       body: JSON.stringify({ key: item.key, action, active }),
     })
 
@@ -202,7 +203,11 @@ async function loadGalleryImages() {
   errorMessage.value = ''
 
   try {
-    const response = await fetch(GALLERY_API_URL, { credentials: 'include' })
+    restoreCustomerSession()
+    const response = await fetch(GALLERY_API_URL, {
+      credentials: 'include',
+      headers: getCustomerAuthorizationHeaders(),
+    })
     if (!response.ok) throw new Error(`Request failed: ${response.status}`)
 
     const payload = await response.json() as GalleryResponse

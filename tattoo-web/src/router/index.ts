@@ -3,11 +3,12 @@ import type { Component } from 'vue'
 import GalleryPage from '../views/GalleryPage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import SettingPage from '../views/SettingPage.vue'
-import LoginPage from '../views/LoginPage.vue'
 import AuthCallbackPage from '../views/AuthCallbackPage.vue'
 import UploadPage from '../views/UploadPage.vue'
+import SignupPage from '../views/SignupPage.vue'
+import SignupCompletePage from '../views/SignupCompletePage.vue'
 
-export type RouteName = 'gallery' | 'profile' | 'setting' | 'login' | 'auth-callback' | 'upload'
+export type RouteName = 'gallery' | 'profile' | 'setting' | 'signup' | 'signup-complete' | 'auth-callback' | 'upload'
 
 type Route = {
   name: RouteName
@@ -24,7 +25,8 @@ export const routes: Route[] = [
 ]
 
 const systemRoutes: Route[] = [
-  { name: 'login', label: 'Login', path: '/login', component: LoginPage },
+  { name: 'signup', label: 'Signup', path: '/signup', component: SignupPage },
+  { name: 'signup-complete', label: 'Signup complete', path: '/signup/complete', component: SignupCompletePage },
   { name: 'auth-callback', label: 'Auth callback', path: '/auth/callback', component: AuthCallbackPage },
 ]
 

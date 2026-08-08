@@ -6,7 +6,7 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 
 ## Gallery account interactions
 
-The gallery sends the existing account session cookie with both gallery and interaction requests (`credentials: 'include'`). The gallery response may include the current account's state:
+The gallery sends the customer JWT as a Bearer token when `customer_auth_token` exists. The gallery response may include the current customer's state:
 
 ```json
 {
@@ -27,18 +27,22 @@ Likes and scraps are persisted through `POST /api/gallery/interactions` with thi
 }
 ```
 
-`action` is either `like` or `scrap`. The backend must identify the account from its existing authenticated session, return `401` when there is no account session, and return the updated interaction state using the response shape above. Persistence should use the existing account primary key plus the gallery key as a unique pair so repeated requests cannot create duplicate likes or scraps. Cross-origin deployments must allow credentialed CORS requests from the web origin.
+`action` is either `like` or `scrap`. The backend must identify the Customer from the application JWT, return `401` when it is missing or invalid, and return the updated interaction state using the response shape above. Persistence should use the Customer primary key plus the gallery key as a unique pair so repeated requests cannot create duplicate likes or scraps.
 
-## Kakao member signup and uploads
+## Kakao customer signup and uploads
 
-Kakao OAuth secrets and the authorization-code exchange must remain on the backend. The web client uses the following session-based contract under `VITE_API_BASE_URL`:
+The public customer flow is separate from the shop-partner back office. `/signup` creates OAuth `state` with Web Crypto and sends the browser to Kakao. `/auth/kakao/callback` validates the returned state and calls only `POST /api/auth/kakao/user/signup`. It never calls the shop-partner endpoint `/api/auth/kakao/signup`.
 
-- `GET /api/auth/kakao/start?returnUrl=...`: create and validate OAuth `state`, then redirect to Kakao authorization. After Kakao callback processing, create or find the local member linked by the stable Kakao user ID, issue the existing secure session cookie, and redirect to `returnUrl`.
-- `GET /api/auth/me`: return `{ "id", "nickname", "profileImageUrl" }` for the current session or `401`.
-- `POST /api/auth/logout`: invalidate the current session.
-- `POST /api/gallery`: authenticated multipart upload with `image`, `title`, and `description`; return `401` when signed out.
+The successful `201` response must contain `{ "token", "user": { "id", "nickname", "role": "user" } }`. Customer credentials are stored only under `customer_auth_token` and `customer_auth_user`; the back-office keys `auth_token` and `auth_user` are not read or changed. The Kakao client secret, access-token exchange, profile lookup, duplicate-customer validation, and Customer creation remain backend responsibilities.
 
-The backend account table should uniquely link the Kakao provider user ID to one local account. Do not send a Kakao REST API key, client secret, authorization code, or access token to this SPA. For cross-origin development, allow the configured web origin, credentials, and the required methods/headers; the session cookie must use the deployment-appropriate `Secure` and `SameSite` attributes.
+Required web configuration:
+
+```env
+VITE_KAKAO_CLIENT_ID=your_kakao_rest_api_key
+VITE_KAKAO_REDIRECT_URI=http://localhost:5173/auth/kakao/callback
+```
+
+The redirect URI must exactly match the backend `KAKAO_REDIRECT_URI` and Kakao developer-console registration. The backend must also allow the web origin through `FRONTEND_ORIGIN_USER`. Authenticated customer uploads use `POST /api/gallery` with the customer bearer token and multipart fields `image`, `title`, and `description`.
 
 ## API proxy and CORS
 
