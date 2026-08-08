@@ -17,7 +17,7 @@ The gallery sends the existing account session cookie with both gallery and inte
 }
 ```
 
-Likes and scraps are persisted through `POST /gallery/interactions` with this request body:
+Likes and scraps are persisted through `POST /api/gallery/interactions` with this request body:
 
 ```json
 {
@@ -33,16 +33,16 @@ Likes and scraps are persisted through `POST /gallery/interactions` with this re
 
 Kakao OAuth secrets and the authorization-code exchange must remain on the backend. The web client uses the following session-based contract under `VITE_API_BASE_URL`:
 
-- `GET /auth/kakao/start?returnUrl=...`: create and validate OAuth `state`, then redirect to Kakao authorization. After Kakao callback processing, create or find the local member linked by the stable Kakao user ID, issue the existing secure session cookie, and redirect to `returnUrl`.
-- `GET /auth/me`: return `{ "id", "nickname", "profileImageUrl" }` for the current session or `401`.
-- `POST /auth/logout`: invalidate the current session.
-- `POST /gallery`: authenticated multipart upload with `image`, `title`, and `description`; return `401` when signed out.
+- `GET /api/auth/kakao/start?returnUrl=...`: create and validate OAuth `state`, then redirect to Kakao authorization. After Kakao callback processing, create or find the local member linked by the stable Kakao user ID, issue the existing secure session cookie, and redirect to `returnUrl`.
+- `GET /api/auth/me`: return `{ "id", "nickname", "profileImageUrl" }` for the current session or `401`.
+- `POST /api/auth/logout`: invalidate the current session.
+- `POST /api/gallery`: authenticated multipart upload with `image`, `title`, and `description`; return `401` when signed out.
 
 The backend account table should uniquely link the Kakao provider user ID to one local account. Do not send a Kakao REST API key, client secret, authorization code, or access token to this SPA. For cross-origin development, allow the configured web origin, credentials, and the required methods/headers; the session cookie must use the deployment-appropriate `Secure` and `SameSite` attributes.
 
 ## API proxy and CORS
 
-The browser calls the same-origin `/api` path by default. During `vite` development and preview, `vite.config.ts` proxies that path to `VITE_API_PROXY_TARGET` and removes the `/api` prefix before forwarding it. For example, a browser request to `/api/gallery` is forwarded to `http://localhost:4000/gallery`. This avoids browser CORS preflights during local development and keeps credentialed session requests on the web origin.
+The browser calls the same-origin `/api` path by default. During `vite` development and preview, `vite.config.ts` proxies that path to `VITE_API_PROXY_TARGET` without rewriting it. For example, a browser request to `/api/gallery` is forwarded to `http://localhost:4000/api/gallery`. This avoids browser CORS preflights during local development, keeps credentialed session requests on the web origin, and preserves the backend's `/api` route prefix.
 
 ```env
 VITE_API_BASE_URL=/api
