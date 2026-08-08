@@ -30,8 +30,15 @@ const systemRoutes: Route[] = [
   { name: 'auth-callback', label: 'Auth callback', path: '/auth/callback', component: AuthCallbackPage },
 ]
 
+function normalizePath(path: string) {
+  const pathname = new URL(path, window.location.origin).pathname
+  if (pathname === '/') return pathname
+  return pathname.replace(/\/+$/, '') || '/'
+}
+
 function resolveRoute(pathname: string): Route {
-  return [...routes, ...systemRoutes].find((route) => route.path === pathname) ?? routes[0]
+  const normalizedPath = normalizePath(pathname)
+  return [...routes, ...systemRoutes].find((route) => route.path === normalizedPath) ?? routes[0]
 }
 
 export const currentRoute = shallowRef<Route>(resolveRoute(window.location.pathname))
