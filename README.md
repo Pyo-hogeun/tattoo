@@ -61,16 +61,18 @@ Swagger 명세는 `backend/src/config/openapi.js`에서 관리합니다. API를 
 ## 4) 카카오 회원가입 및 권한
 
 필수 환경 변수는 `JWT_SECRET`, `KAKAO_CLIENT_ID`, 프론트엔드의
-`NUXT_PUBLIC_KAKAO_CLIENT_ID`, `NUXT_PUBLIC_KAKAO_REDIRECT_URI`입니다. 카카오 개발자
-콘솔에도 동일한 Redirect URI를 등록해야 합니다.
+`NUXT_PUBLIC_KAKAO_CLIENT_ID`, 백오피스용 `NUXT_PUBLIC_KAKAO_REDIRECT_URI`, 일반 사용자용
+`NUXT_PUBLIC_KAKAO_USER_REDIRECT_URI`입니다. 카카오 개발자 콘솔에도 두 Redirect URI를 모두
+등록해야 합니다.
 
 ### 카카오 REST API 키 설정 방법
 
 1. [카카오 개발자 콘솔](https://developers.kakao.com/console/app)에 로그인하고 애플리케이션을 생성합니다.
 2. 애플리케이션의 **앱 키** 화면에서 **REST API 키**를 복사합니다. JavaScript 키가 아닙니다.
-3. **카카오 로그인**을 활성화하고 Redirect URI에
-   `http://localhost:3000/auth/kakao/callback`을 등록합니다. 운영 환경에서는 실제 HTTPS
-   도메인의 `/auth/kakao/callback`도 별도로 등록해야 합니다.
+3. **카카오 로그인**을 활성화하고 Redirect URI에 백오피스
+   `http://localhost:3000/auth/kakao/callback`과 일반 사용자
+   `http://localhost:3001/auth/kakao/callback`을 등록합니다. 운영 환경에서도 각 프론트엔드의
+   실제 HTTPS Redirect URI를 별도로 등록해야 합니다.
 4. 예제 파일을 복사하고, `your_kakao_rest_api_key`를 2번에서 복사한 같은 키로 교체합니다.
 
 ```bash
@@ -83,6 +85,7 @@ cp backend/.env.example backend/.env
 ```dotenv
 NUXT_PUBLIC_KAKAO_CLIENT_ID=발급받은_REST_API_키
 NUXT_PUBLIC_KAKAO_REDIRECT_URI=http://localhost:3000/auth/kakao/callback
+NUXT_PUBLIC_KAKAO_USER_REDIRECT_URI=http://localhost:3001/auth/kakao/callback
 NUXT_PUBLIC_API_BASE=http://localhost:4000/api
 ```
 
@@ -91,6 +94,7 @@ NUXT_PUBLIC_API_BASE=http://localhost:4000/api
 ```dotenv
 KAKAO_CLIENT_ID=발급받은_동일한_REST_API_키
 KAKAO_REDIRECT_URI=http://localhost:3000/auth/kakao/callback
+KAKAO_USER_REDIRECT_URI=http://localhost:3001/auth/kakao/callback
 KAKAO_CLIENT_SECRET=
 JWT_SECRET=충분히_긴_임의의_비밀문자열
 ```
@@ -103,7 +107,8 @@ Client Secret은 카카오 개발자 콘솔에서 별도로 활성화한 경우�
 카카오 동의 후 `Not exist client_id []`가 표시된다면 프론트엔드 키는 있으나 백엔드의
 `KAKAO_CLIENT_ID`가 비어 있다는 뜻입니다. `backend/.env`가 저장소 루트가 아닌
 `backend` 디렉터리 안에 있는지 확인하고 백엔드 서버를 재시작하세요. 백엔드의
-`KAKAO_REDIRECT_URI`도 프론트엔드 및 카카오 개발자 콘솔에 등록한 값과 정확히 같아야 합니다.
+`KAKAO_REDIRECT_URI`와 `KAKAO_USER_REDIRECT_URI`도 각각의 프론트엔드 환경 변수 및 카카오
+개발자 콘솔에 등록한 값과 정확히 같아야 합니다.
 
 `Bad client credentials`가 표시되면 다음 두 항목을 확인하세요.
 
@@ -166,6 +171,10 @@ scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므
 계정이 일반 사용자와 매장 파트너 계정으로 각각 가입할 수 있습니다. 일반 사용자 인증 결과는
 백오피스의 `auth_token`, `auth_user`와 섞이지 않도록 `customer_auth_token`,
 `customer_auth_user` 키에 저장합니다.
+
+일반 사용자 OAuth에는 `NUXT_PUBLIC_KAKAO_USER_REDIRECT_URI`와 `KAKAO_USER_REDIRECT_URI`를,
+매장 관리자 OAuth에는 `NUXT_PUBLIC_KAKAO_REDIRECT_URI`와 `KAKAO_REDIRECT_URI`를 사용합니다.
+서로 다른 프론트엔드 도메인을 사용해도 callback 주소가 섞이지 않습니다.
 
 manager가 갤러리에서 업로드한 JPG, PNG, WEBP, GIF 파일은 `/brow-shapes/manage`의 이미지와
 동일한 Cloudflare R2 버킷에 `gallery/...` 키로 저장됩니다. 파일당 최대 크기는 10MB입니다.

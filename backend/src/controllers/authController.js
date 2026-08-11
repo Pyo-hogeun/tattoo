@@ -15,7 +15,7 @@ const normalizeLoginId = (value) => typeof value === 'string' ? value.trim().toL
 
 const validateTestPassword = (password) => typeof password === 'string' && password.length >= 8;
 
-const getKakaoProfile = async ({ accessToken, code, redirectUri, clientId }) => {
+const getKakaoProfile = async ({ accessToken, code, redirectUri, clientId }, expectedRedirectUri = env.kakaoRedirectUri) => {
   let token = accessToken;
   if (!token && code) {
     if (!env.kakaoClientId) {
@@ -28,12 +28,12 @@ const getKakaoProfile = async ({ accessToken, code, redirectUri, clientId }) => 
       error.statusCode = 400;
       throw error;
     }
-    if (redirectUri && redirectUri !== env.kakaoRedirectUri) {
+    if (redirectUri && redirectUri !== expectedRedirectUri) {
       const error = new Error('카카오 Redirect URI 설정이 프론트엔드와 백엔드에서 일치하지 않습니다.');
       error.statusCode = 400;
       throw error;
     }
-    const body = new URLSearchParams({ grant_type: 'authorization_code', client_id: env.kakaoClientId, redirect_uri: env.kakaoRedirectUri, code });
+    const body = new URLSearchParams({ grant_type: 'authorization_code', client_id: env.kakaoClientId, redirect_uri: expectedRedirectUri, code });
     if (env.kakaoClientSecret) body.set('client_secret', env.kakaoClientSecret);
     const response = await fetch('https://kauth.kakao.com/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
     const data = await response.json();
@@ -92,7 +92,7 @@ export const kakaoSignUp = async (req, res, next) => {
 
 export const kakaoCustomerSignUp = async (req, res, next) => {
   try {
-    const profile = await getKakaoProfile(req.body);
+    const profile = await getKakaoProfile(req.body, env.kakaoUserRedirectUri);
     const kakaoId = String(profile.id);
     if (await Customer.exists({ kakaoId })) {
       return res.status(409).json({ message: '이미 가입한 일반 사용자 카카오 계정입니다.' });

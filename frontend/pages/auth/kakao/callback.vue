@@ -17,7 +17,7 @@ onMounted(async () => {
       body: {
         ...(saved ? JSON.parse(saved) : {}),
         code,
-        redirectUri: config.public.kakaoRedirectUri,
+        redirectUri: flow === 'user-signup' ? config.public.kakaoUserRedirectUri : config.public.kakaoRedirectUri,
         clientId: config.public.kakaoClientId
       }
     });

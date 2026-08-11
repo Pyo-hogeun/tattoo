@@ -17,7 +17,7 @@ const startKakaoSignup = () => {
   sessionStorage.removeItem('signup_shop');
   const query = new URLSearchParams({
     client_id: String(config.public.kakaoClientId),
-    redirect_uri: String(config.public.kakaoRedirectUri),
+    redirect_uri: String(config.public.kakaoUserRedirectUri),
     response_type: 'code',
     state
   });
