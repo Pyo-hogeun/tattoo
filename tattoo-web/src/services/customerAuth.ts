@@ -11,6 +11,22 @@ export interface CustomerSignupResponse {
   user: CustomerUser
 }
 
+function isCustomerUser(value: unknown): value is CustomerUser {
+  if (!value || typeof value !== 'object') return false
+  const user = value as Partial<CustomerUser>
+  return typeof user.id === 'string'
+    && user.id.length > 0
+    && typeof user.nickname === 'string'
+    && user.nickname.length > 0
+    && user.role === 'user'
+}
+
+export function isCustomerSignupResponse(value: unknown): value is CustomerSignupResponse {
+  if (!value || typeof value !== 'object') return false
+  const response = value as Partial<CustomerSignupResponse>
+  return typeof response.token === 'string' && response.token.length > 0 && isCustomerUser(response.user)
+}
+
 const CUSTOMER_TOKEN_KEY = 'customer_auth_token'
 const CUSTOMER_USER_KEY = 'customer_auth_user'
 const customerUserState = ref<CustomerUser | null>(null)
@@ -26,8 +42,8 @@ export function restoreCustomerSession() {
   }
 
   try {
-    const user = JSON.parse(storedUser) as CustomerUser
-    if (!user.id || !user.nickname || user.role !== 'user') throw new Error('Invalid customer session')
+    const user: unknown = JSON.parse(storedUser)
+    if (!isCustomerUser(user)) throw new Error('Invalid customer session')
     customerTokenState.value = token
     customerUserState.value = user
     return user
@@ -38,7 +54,7 @@ export function restoreCustomerSession() {
 }
 
 export function saveCustomerSession(data: CustomerSignupResponse) {
-  if (!data.token || data.user.role !== 'user') throw new Error('Invalid customer signup response')
+  if (!isCustomerSignupResponse(data)) throw new Error('Invalid customer signup response')
 
   localStorage.setItem(CUSTOMER_TOKEN_KEY, data.token)
   localStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(data.user))

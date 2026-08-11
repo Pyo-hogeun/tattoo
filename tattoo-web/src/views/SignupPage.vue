@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { createKakaoSignupUrl } from '../services/kakaoCustomerSignup'
 
-const KAKAO_OAUTH_STATE_KEY = 'kakao_oauth_state'
-const KAKAO_OAUTH_FLOW_KEY = 'kakao_oauth_flow'
 const isPrivacyAgreed = ref(false)
 const errorMessage = ref('')
 const isStarting = ref(false)
@@ -22,18 +21,7 @@ function startUserSignup() {
   }
 
   isStarting.value = true
-  const state = crypto.randomUUID()
-  sessionStorage.setItem(KAKAO_OAUTH_STATE_KEY, state)
-  sessionStorage.setItem(KAKAO_OAUTH_FLOW_KEY, 'user-signup')
-  sessionStorage.removeItem('signup_shop')
-
-  const query = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    response_type: 'code',
-    state,
-  })
-  window.location.assign(`https://kauth.kakao.com/oauth/authorize?${query}`)
+  window.location.assign(createKakaoSignupUrl(clientId, redirectUri))
 }
 </script>
 

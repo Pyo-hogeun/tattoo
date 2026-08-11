@@ -27,7 +27,7 @@ export const routes: Route[] = [
 const systemRoutes: Route[] = [
   { name: 'signup', label: 'Signup', path: '/signup', component: SignupPage },
   { name: 'signup-complete', label: 'Signup complete', path: '/signup/complete', component: SignupCompletePage },
-  { name: 'auth-callback', label: 'Auth callback', path: '/auth/callback', component: AuthCallbackPage },
+  { name: 'auth-callback', label: 'Auth callback', path: '/auth/kakao/callback', component: AuthCallbackPage },
 ]
 
 function normalizePath(path: string) {
