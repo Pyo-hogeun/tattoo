@@ -165,7 +165,11 @@ export const openapiDocument = {
     },
     '/api/auth/users/{id}': {
       get: { tags: ['Auth'], summary: '사용자 상세 조회', description: 'master 또는 admin 권한이 필요합니다.', parameters: [idParameter], responses: { 200: { description: '사용자 상세' }, 404: errorResponse('사용자를 찾을 수 없음') } },
-      patch: { tags: ['Auth'], summary: '사용자 정보 수정', description: '닉네임, 권한, 활성 상태를 수정합니다. admin은 master 계정을 수정하거나 master 권한을 부여할 수 없습니다.', parameters: [idParameter], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UserUpdateInput' } } } }, responses: { 200: { description: '수정된 사용자' }, 400: errorResponse('입력값 오류'), 403: errorResponse('권한 없음'), 404: errorResponse('사용자를 찾을 수 없음') } }
+      patch: { tags: ['Auth'], summary: '사용자 정보 수정', description: '닉네임, 권한, 활성 상태를 수정합니다. admin은 master 계정을 수정하거나 master 권한을 부여할 수 없습니다.', parameters: [idParameter], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UserUpdateInput' } } } }, responses: { 200: { description: '수정된 사용자' }, 400: errorResponse('입력값 오류'), 403: errorResponse('권한 없음'), 404: errorResponse('사용자를 찾을 수 없음') } },
+      delete: { tags: ['Auth'], summary: '사용자 계정 삭제', description: 'master/admin이 사용자를 삭제합니다. admin은 master를 삭제할 수 없고 마지막 활성 master는 삭제할 수 없습니다.', parameters: [idParameter], responses: { 204: { description: '삭제 완료' }, 400: errorResponse('마지막 master 삭제 불가'), 403: errorResponse('권한 없음'), 404: errorResponse('사용자를 찾을 수 없음') } }
+    },
+    '/api/auth/me': {
+      delete: { tags: ['Auth'], summary: '내 계정 삭제', description: '로그인한 본인의 백오피스 계정을 삭제합니다. 마지막 활성 master는 삭제할 수 없습니다.', responses: { 204: { description: '삭제 완료' }, 400: errorResponse('마지막 master 삭제 불가'), 401: errorResponse('인증 필요') } }
     }
   },
   components: {

@@ -13,6 +13,8 @@ const router = useRouter();
 const user = ref<SessionUser | null>(null);
 const sessionActive = ref(false);
 const profileOpen = ref(false);
+const deleting = ref(false);
+const accountError = ref('');
 const profileArea = ref<HTMLElement | null>(null);
 const initials = computed(() => (user.value?.nickname || user.value?.shop?.name || 'U').trim().slice(0, 1).toUpperCase());
 const roleLabel = computed(() => ({ master: '최고 관리자', admin: '관리자', manager: '매장 관리자' }[user.value?.role || ''] || '사용자'));
@@ -35,6 +37,18 @@ const logout = async () => {
   localStorage.removeItem('auth_user');
   profileOpen.value = false;
   await router.push('/');
+};
+const deleteMyAccount = async () => {
+  if (!confirm('계정을 삭제하면 다시 로그인할 수 없습니다. 정말 삭제하시겠습니까?')) return;
+  const token = localStorage.getItem('auth_token');
+  deleting.value = true;
+  accountError.value = '';
+  try {
+    await $fetch(`${config.public.apiBase}/auth/me`, { method: 'DELETE', headers: { Authorization: `Bearer ${token || ''}` } });
+    await logout();
+  } catch (error: any) {
+    accountError.value = error?.data?.message || '계정을 삭제하지 못했습니다.';
+  } finally { deleting.value = false; }
 };
 const closeOnOutsideClick = (event: MouseEvent) => {
   if (!profileArea.value?.contains(event.target as Node)) profileOpen.value = false;
@@ -75,7 +89,8 @@ onBeforeUnmount(() => {
         <div v-if="profileOpen" class="absolute right-0 top-12 w-72 overflow-hidden rounded-xl border bg-white shadow-xl" role="menu">
           <div class="border-b bg-slate-50 p-4"><p class="font-semibold text-slate-900">{{ user?.nickname || '로그인 사용자' }}</p><p class="mt-1 text-xs text-slate-500">{{ roleLabel }} · {{ user?.role || '-' }}</p></div>
           <dl class="space-y-3 p-4 text-sm"><div><dt class="text-xs text-slate-400">로그인 상태</dt><dd class="mt-1 font-medium" :class="sessionActive ? 'text-emerald-700' : 'text-red-700'">{{ sessionActive ? '정상' : '인증 확인 필요' }}</dd></div><div><dt class="text-xs text-slate-400">소속 매장</dt><dd class="mt-1 text-slate-700">{{ user?.shop?.name || '소속 매장 없음' }}</dd></div></dl>
-          <div class="border-t p-2"><button type="button" class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50" role="menuitem" @click="logout">로그아웃</button></div>
+          <p v-if="accountError" class="mx-3 mb-2 rounded-lg bg-red-50 p-2 text-xs text-red-700" role="alert">{{ accountError }}</p>
+          <div class="border-t p-2"><button type="button" class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100" role="menuitem" @click="logout">로그아웃</button><button type="button" class="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50" :disabled="deleting" role="menuitem" @click="deleteMyAccount">{{ deleting ? '삭제 중...' : '내 계정 삭제' }}</button></div>
         </div>
       </div>
     </div>

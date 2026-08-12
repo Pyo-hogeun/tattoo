@@ -173,6 +173,18 @@ export const testLogin = async (req, res, next) => {
 
 export const me = (req, res) => res.json({ user: publicUser(req.user) });
 
+const removeUser = async (user, res) => {
+  if (user.role === 'master' && await User.countDocuments({ role: 'master', isActive: true }) <= 1) {
+    return res.status(400).json({ message: '마지막 활성 master 계정은 삭제할 수 없습니다.' });
+  }
+  await User.deleteOne({ _id: user._id });
+  return res.status(204).send();
+};
+
+export const deleteMyAccount = async (req, res, next) => {
+  try { await removeUser(req.user, res); } catch (error) { next(error); }
+};
+
 export const listUsers = async (req, res, next) => {
   try {
     const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
@@ -227,6 +239,17 @@ export const updateUser = async (req, res, next) => {
     if (req.body.isActive !== undefined) user.isActive = req.body.isActive;
     await user.save();
     res.json({ user: managedUser(user) });
+  } catch (error) { next(error); }
+};
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: '회원을 찾을 수 없습니다.' });
+    if (req.user.role === 'admin' && user.role === 'master') {
+      return res.status(403).json({ message: 'admin은 master 계정을 삭제할 수 없습니다.' });
+    }
+    await removeUser(user, res);
   } catch (error) { next(error); }
 };
 

@@ -13,6 +13,7 @@ const isActive = ref(true);
 const viewerRole = ref('');
 const loading = ref(true);
 const saving = ref(false);
+const deleting = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 const canChooseMaster = computed(() => viewerRole.value === 'master');
@@ -37,6 +38,15 @@ const save = async () => {
   } catch (error: any) { errorMessage.value = error?.data?.message || '사용자 정보를 저장하지 못했습니다.'; }
   finally { saving.value = false; }
 };
+const deleteAccount = async () => {
+  if (!user.value || !confirm(`${user.value.nickname || '이 사용자'} 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+  deleting.value = true; errorMessage.value = '';
+  try {
+    await $fetch(`${config.public.apiBase}/auth/users/${route.params.id}`, { method: 'DELETE', headers: headers() });
+    await navigateTo('/users');
+  } catch (error: any) { errorMessage.value = error?.data?.message || '사용자 계정을 삭제하지 못했습니다.'; }
+  finally { deleting.value = false; }
+};
 
 onMounted(() => {
   try { viewerRole.value = JSON.parse(localStorage.getItem('auth_user') || '{}').role || ''; } catch { viewerRole.value = ''; }
@@ -57,7 +67,7 @@ onMounted(() => {
         <label class="flex items-center justify-between rounded-lg border p-4"><span><span class="block text-sm font-medium">계정 활성화</span><span class="text-xs text-slate-500">비활성 계정은 로그인할 수 없습니다.</span></span><input v-model="isActive" type="checkbox" class="h-5 w-5" /></label>
         <div class="rounded-lg border p-4"><h2 class="font-medium">연결 매장</h2><dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2"><div><dt class="text-slate-500">매장명</dt><dd>{{ user.shop?.name || '-' }}</dd></div><div><dt class="text-slate-500">전화번호</dt><dd>{{ user.shop?.phone || '-' }}</dd></div><div class="sm:col-span-2"><dt class="text-slate-500">주소</dt><dd>{{ user.shop?.address || '-' }}</dd></div></dl></div>
         <p v-if="errorMessage" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ errorMessage }}</p><p v-if="successMessage" class="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{{ successMessage }}</p>
-        <div class="flex justify-end gap-2"><NuxtLink to="/users" class="rounded-lg border px-4 py-2 text-sm">취소</NuxtLink><button type="submit" :disabled="saving" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{{ saving ? '저장 중...' : '변경사항 저장' }}</button></div>
+        <div class="flex flex-wrap justify-between gap-2"><button type="button" :disabled="deleting" class="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50" @click="deleteAccount">{{ deleting ? '삭제 중...' : '사용자 계정 삭제' }}</button><div class="flex gap-2"><NuxtLink to="/users" class="rounded-lg border px-4 py-2 text-sm">취소</NuxtLink><button type="submit" :disabled="saving || deleting" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{{ saving ? '저장 중...' : '변경사항 저장' }}</button></div></div>
       </form>
     </main>
   </div>
