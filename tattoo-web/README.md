@@ -31,9 +31,9 @@ Likes and scraps are persisted through `POST /api/gallery/interactions` with thi
 
 ## Kakao customer signup and uploads
 
-The public customer flow is separate from the shop-partner back office. `/signup` creates OAuth `state` with Web Crypto and sends the browser to Kakao. `/auth/kakao/callback` validates the returned state and calls only `POST /api/auth/kakao/user/signup`. It never calls the shop-partner endpoint `/api/auth/kakao/signup`. The callback claims and removes its one-time OAuth state before exchanging the authorization code, preventing a refresh or remount from sending the code twice.
+The public customer flow is separate from the shop-partner back office. `/signup` offers both new-customer signup and existing-customer login. Each action creates OAuth `state` with Web Crypto and stores an explicit `user-signup` or `user-login` flow before sending the browser to Kakao. `/auth/kakao/callback` validates both the returned state and flow, then calls `POST /api/auth/kakao/user/signup` for signup or `POST /api/auth/kakao/user/login` for login. It never calls the shop-partner endpoints. The callback claims and removes its one-time OAuth state before exchanging the authorization code, preventing a refresh or remount from sending the code twice.
 
-The successful `201` response must contain `{ "token", "user": { "id", "nickname", "role": "user" } }`. Customer credentials are stored only under `customer_auth_token` and `customer_auth_user`; the back-office keys `auth_token` and `auth_user` are not read or changed. The Kakao client secret, access-token exchange, profile lookup, duplicate-customer validation, and Customer creation remain backend responsibilities.
+Signup must return `201`, and login must return `200`. Both responses must contain `{ "token", "user": { "id", "nickname", "role": "user" } }`. Customer credentials are stored only under `customer_auth_token` and `customer_auth_user`; the back-office keys `auth_token` and `auth_user` are not read or changed. The Kakao client secret, access-token exchange, profile lookup, duplicate-customer validation, and Customer creation remain backend responsibilities.
 
 Required web configuration:
 
