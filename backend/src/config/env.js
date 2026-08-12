@@ -7,11 +7,23 @@ const configDirectory = path.dirname(fileURLToPath(import.meta.url));
 // Always load backend/.env, even when the server is started from the repository root.
 dotenv.config({ path: path.resolve(configDirectory, '../../.env') });
 
+const parseOrigins = (...values) => values
+  .flatMap((value) => String(value || '').split(','))
+  .map((value) => value.trim())
+  .filter(Boolean)
+  .map((value) => {
+    try { return new URL(value).origin; } catch { return value.replace(/\/$/, ''); }
+  });
+
+const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+const frontendOriginUser = process.env.FRONTEND_ORIGIN_USER || 'http://localhost:3001';
+
 export const env = {
   port: Number(process.env.PORT || 4000),
   mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/eyebrow_backoffice',
-  frontendOrigin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
-  frontendOriginUser: process.env.FRONTEND_ORIGIN_USER,
+  frontendOrigin,
+  frontendOriginUser,
+  frontendOrigins: [...new Set(parseOrigins(frontendOrigin, frontendOriginUser))],
   jwtSecret: process.env.JWT_SECRET || 'change-this-secret-in-production',
   kakaoClientId: process.env.KAKAO_CLIENT_ID?.trim() || '',
   kakaoClientSecret: process.env.KAKAO_CLIENT_SECRET?.trim() || '',

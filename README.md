@@ -176,6 +176,11 @@ scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므
 매장 관리자 OAuth에는 `NUXT_PUBLIC_KAKAO_REDIRECT_URI`와 `KAKAO_REDIRECT_URI`를 사용합니다.
 서로 다른 프론트엔드 도메인을 사용해도 callback 주소가 섞이지 않습니다.
 
+브라우저에서 로그인 또는 회원가입 API 호출 시 CORS 오류가 발생하면 `FRONTEND_ORIGIN`과
+`FRONTEND_ORIGIN_USER`에 각각 실제 브라우저 주소의 **origin**을 설정하고 백엔드를 재시작하세요.
+origin에는 `/login` 같은 경로를 포함하지 않으며, 프로토콜과 포트까지 일치해야 합니다. 허용할
+주소가 여러 개면 `https://example.com,https://www.example.com`처럼 쉼표로 구분할 수 있습니다.
+
 manager가 갤러리에서 업로드한 JPG, PNG, WEBP, GIF 파일은 `/brow-shapes/manage`의 이미지와
 동일한 Cloudflare R2 버킷에 `gallery/...` 키로 저장됩니다. 파일당 최대 크기는 10MB입니다.
 백엔드 `.env`에 `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`, `R2_BUCKET`,
