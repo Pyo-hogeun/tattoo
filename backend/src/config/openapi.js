@@ -143,6 +143,20 @@ export const openapiDocument = {
         responses: { 201: { description: '일반 사용자 가입 완료' }, 400: errorResponse('카카오 인증 오류'), 409: errorResponse('이미 가입한 일반 사용자') }
       }
     },
+    '/api/auth/kakao/user/login': {
+      post: { tags: ['Auth'], summary: '일반 사용자 카카오 로그인', responses: { 200: { description: '로그인 완료' }, 400: errorResponse('카카오 인증 오류'), 404: errorResponse('가입되지 않은 사용자') } }
+    },
+    '/api/auth/user/me': {
+      get: { tags: ['Auth'], summary: '일반 사용자 세션 조회', responses: { 200: { description: '현재 일반 사용자' }, 401: errorResponse('인증 필요') } },
+      delete: { tags: ['Auth'], summary: '일반 사용자 계정 삭제', responses: { 204: { description: '계정 및 상호작용 삭제 완료' }, 401: errorResponse('인증 필요') } }
+    },
+    '/api/interactions': {
+      get: { tags: ['Gallery'], summary: '내 상호작용 목록', parameters: [{ name: 'type', in: 'query', schema: { type: 'string', enum: ['like', 'bookmark'] } }, { name: 'targetId', in: 'query', schema: { type: 'string' } }], responses: { 200: { description: '상호작용 목록' }, 401: errorResponse('일반 사용자 인증 필요') } },
+      post: { tags: ['Gallery'], summary: '상호작용 생성', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/InteractionInput' } } } }, responses: { 201: { description: '상호작용 생성 또는 기존 항목 반환' }, 400: errorResponse('입력값 오류'), 401: errorResponse('일반 사용자 인증 필요') } }
+    },
+    '/api/interactions/{id}': {
+      delete: { tags: ['Gallery'], summary: '내 상호작용 삭제', parameters: [idParameter], responses: { 204: { description: '삭제 완료' }, 401: errorResponse('일반 사용자 인증 필요'), 404: errorResponse('상호작용을 찾을 수 없음') } }
+    },
     '/api/auth/test/login': {
       post: {
         tags: ['Auth'], summary: '테스트 전용 ID/PW 로그인',
@@ -189,7 +203,8 @@ export const openapiDocument = {
       TestSignUpInput: { type: 'object', required: ['loginId', 'password'], description: 'manager 역할은 shopName, address, phone도 필수이며 admin/master 역할에는 매장 정보가 필요하지 않습니다.', properties: { loginId: { type: 'string', pattern: '^[a-z0-9._-]{4,40}$' }, password: { type: 'string', minLength: 8 }, nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'], default: 'manager' }, shopName: { type: 'string' }, address: { type: 'string' }, phone: { type: 'string' } } },
       ManagedUser: { type: 'object', required: ['id', 'role', 'isActive', 'createdAt', 'updatedAt'], properties: { id: { type: 'string' }, nickname: { type: 'string' }, loginId: { type: 'string', nullable: true }, kakaoId: { type: 'string', nullable: true }, role: { type: 'string', enum: ['master', 'admin', 'manager'] }, shop: { $ref: '#/components/schemas/Shop' }, isActive: { type: 'boolean' }, createdAt: { type: 'string', format: 'date-time' }, updatedAt: { type: 'string', format: 'date-time' } } },
       UserList: { type: 'object', required: ['items', 'total', 'page', 'limit', 'totalPages'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/ManagedUser' } }, total: { type: 'integer' }, page: { type: 'integer' }, limit: { type: 'integer' }, totalPages: { type: 'integer' } } },
-      UserUpdateInput: { type: 'object', properties: { nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'] }, isActive: { type: 'boolean' } } }
+      UserUpdateInput: { type: 'object', properties: { nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'] }, isActive: { type: 'boolean' } } },
+      InteractionInput: { type: 'object', required: ['targetId', 'type'], properties: { targetType: { type: 'string', enum: ['gallery'], default: 'gallery' }, targetId: { type: 'string', example: 'gallery/example.webp' }, type: { type: 'string', enum: ['like', 'bookmark'] } } }
     }
   }
 };

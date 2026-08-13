@@ -7,6 +7,7 @@ import shopRoutes from './routes/shopRoutes.js';
 import browShapeRoutes from './routes/browShapeRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import galleryRoutes from './routes/galleryRoutes.js';
+import interactionRoutes from './routes/interactionRoutes.js';
 import { env } from './config/env.js';
 import { openapiDocument } from './config/openapi.js';
 
@@ -65,6 +66,7 @@ export const createApp = () => {
   app.use('/api/brow-shapes', browShapeRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/gallery', galleryRoutes);
+  app.use('/api/interactions', interactionRoutes);
 
   app.use((err, _req, res, _next) => {
     console.error(err);

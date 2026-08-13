@@ -175,6 +175,20 @@ scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므
 백오피스의 `auth_token`, `auth_user`와 섞이지 않도록 `customer_auth_token`,
 `customer_auth_user` 키에 저장합니다.
 
+일반 사용자 API는 다음과 같습니다. 모든 인증 API와 상호작용 API는 백오피스 토큰이 아닌
+`customer_auth_token`을 `Authorization: Bearer <token>`으로 전송해야 합니다.
+
+- `POST /api/auth/kakao/user/signup`: 일반 사용자 카카오 회원가입
+- `POST /api/auth/kakao/user/login`: 기존 일반 사용자 카카오 로그인
+- `GET /api/auth/user/me`: 현재 일반 사용자 세션 조회
+- `DELETE /api/auth/user/me`: 본인 계정과 상호작용 데이터 삭제
+- `GET /api/interactions`: 본인의 좋아요·북마크 목록 조회
+- `POST /api/interactions`: `{ targetType: "gallery", targetId, type: "like" | "bookmark" }` 생성
+- `DELETE /api/interactions/:id`: 본인의 상호작용 삭제
+
+`/api/interactions`는 Customer JWT 전용 인증을 사용하므로 다른 사용자의 데이터는 조회하거나
+삭제할 수 없으며, 같은 대상과 유형을 반복 등록해도 중복 레코드를 만들지 않습니다.
+
 일반 사용자 OAuth에는 `NUXT_PUBLIC_KAKAO_USER_REDIRECT_URI`와 `KAKAO_USER_REDIRECT_URI`를,
 매장 관리자 OAuth에는 `NUXT_PUBLIC_KAKAO_REDIRECT_URI`와 `KAKAO_REDIRECT_URI`를 사용합니다.
 서로 다른 프론트엔드 도메인을 사용해도 callback 주소가 섞이지 않습니다.

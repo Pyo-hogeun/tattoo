@@ -2,6 +2,7 @@ import { env } from '../config/env.js';
 import { Shop } from '../models/Shop.js';
 import { User } from '../models/User.js';
 import { Customer } from '../models/Customer.js';
+import { Interaction } from '../models/Interaction.js';
 import { signToken } from '../utils/token.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 
@@ -103,6 +104,29 @@ export const kakaoCustomerSignUp = async (req, res, next) => {
     });
     const user = { id: customer.id, nickname: customer.nickname, role: 'user' };
     res.status(201).json({ token: signToken(user), user });
+  } catch (error) { next(error); }
+};
+
+const publicCustomer = (customer) => ({ id: customer.id, nickname: customer.nickname, role: 'user' });
+
+export const kakaoCustomerLogin = async (req, res, next) => {
+  try {
+    const profile = await getKakaoProfile(req.body, env.kakaoUserRedirectUri);
+    const customer = await Customer.findOne({ kakaoId: String(profile.id) });
+    if (!customer) return res.status(404).json({ message: '가입되지 않은 일반 사용자 계정입니다.' });
+    if (!customer.isActive) return res.status(403).json({ message: '비활성 일반 사용자 계정입니다.' });
+    const user = publicCustomer(customer);
+    res.json({ token: signToken(user), user });
+  } catch (error) { next(error); }
+};
+
+export const customerMe = (req, res) => res.json({ user: publicCustomer(req.customer) });
+
+export const deleteCustomerAccount = async (req, res, next) => {
+  try {
+    await Interaction.deleteMany({ customer: req.customer._id });
+    await Customer.deleteOne({ _id: req.customer._id });
+    res.status(204).send();
   } catch (error) { next(error); }
 };
 
