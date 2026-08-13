@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { customerMe, deleteCustomerAccount, deleteMyAccount, deleteUser, getUser, kakaoCustomerLogin, kakaoCustomerSignUp, kakaoLogin, kakaoSignUp, listUsers, me, testLogin, testSignUp, updateUser, updateUserRole } from '../controllers/authController.js';
+import { customerMe, deleteCustomerAccount, deleteManagedCustomer, deleteMyAccount, deleteUser, getCustomer, getUser, kakaoCustomerLogin, kakaoCustomerSignUp, kakaoLogin, kakaoSignUp, listCustomers, listUsers, me, testLogin, testSignUp, updateCustomer, updateUser, updateUserRole } from '../controllers/authController.js';
 import { allowRoles, authenticate } from '../middleware/auth.js';
 import { authenticateCustomer } from '../middleware/customerAuth.js';
 const router = Router();
@@ -13,6 +13,10 @@ router.get('/me', authenticate, me);
 router.delete('/me', authenticate, deleteMyAccount);
 router.get('/user/me', authenticateCustomer, customerMe);
 router.delete('/user/me', authenticateCustomer, deleteCustomerAccount);
+router.get('/customers', authenticate, allowRoles('master', 'admin'), listCustomers);
+router.get('/customers/:id', authenticate, allowRoles('master', 'admin'), getCustomer);
+router.patch('/customers/:id', authenticate, allowRoles('master', 'admin'), updateCustomer);
+router.delete('/customers/:id', authenticate, allowRoles('master', 'admin'), deleteManagedCustomer);
 router.get('/users', authenticate, allowRoles('master', 'admin'), listUsers);
 router.get('/users/:id', authenticate, allowRoles('master', 'admin'), getUser);
 router.patch('/users/:id', authenticate, allowRoles('master', 'admin'), updateUser);

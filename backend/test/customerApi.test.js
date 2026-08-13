@@ -5,7 +5,7 @@ import { Interaction } from '../src/models/Interaction.js';
 import { authenticateCustomer } from '../src/middleware/customerAuth.js';
 import { createInteraction, deleteInteraction, listInteractions } from '../src/controllers/interactionController.js';
 import { signToken } from '../src/utils/token.js';
-import { customerMe, deleteCustomerAccount } from '../src/controllers/authController.js';
+import { customerMe, deleteCustomerAccount, deleteManagedCustomer, updateCustomer } from '../src/controllers/authController.js';
 
 const response = () => ({
   statusCode: 200, body: undefined,
@@ -80,4 +80,28 @@ test('customer me returns public profile and account deletion cascades interacti
     ['interactions', { customer: 'customer-id' }],
     ['customer', { _id: 'customer-id' }]
   ]);
+});
+
+test('backoffice administrator can update and delete a general user', async (t) => {
+  const originals = { findById: Customer.findById, deleteCustomer: Customer.deleteOne, deleteInteractions: Interaction.deleteMany };
+  t.after(() => {
+    Customer.findById = originals.findById;
+    Customer.deleteOne = originals.deleteCustomer;
+    Interaction.deleteMany = originals.deleteInteractions;
+  });
+  let saved = false;
+  const customer = { id: 'customer-id', _id: 'customer-id', kakaoId: 'kakao-id', nickname: '기존 이름', isActive: true, createdAt: new Date(), updatedAt: new Date(), async save() { saved = true; } };
+  Customer.findById = async () => customer;
+  let res = response();
+  await updateCustomer({ params: { id: customer.id }, body: { nickname: '변경 이름', isActive: false } }, res, assert.fail);
+  assert.equal(saved, true);
+  assert.equal(res.body.user.nickname, '변경 이름');
+  assert.equal(res.body.user.role, 'user');
+  assert.equal(res.body.user.accountType, 'customer');
+
+  Interaction.deleteMany = async (filter) => assert.deepEqual(filter, { customer: customer._id });
+  Customer.deleteOne = async (filter) => assert.deepEqual(filter, { _id: customer._id });
+  res = response();
+  await deleteManagedCustomer({ params: { id: customer.id } }, res, assert.fail);
+  assert.equal(res.statusCode, 204);
 });

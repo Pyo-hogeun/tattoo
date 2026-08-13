@@ -189,6 +189,11 @@ scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므
 `/api/interactions`는 Customer JWT 전용 인증을 사용하므로 다른 사용자의 데이터는 조회하거나
 삭제할 수 없으며, 같은 대상과 유형을 반복 등록해도 중복 레코드를 만들지 않습니다.
 
+백오피스의 **사용자 관리** 메뉴에는 매장·관리자와 일반 사용자 탭이 있습니다. `master`와
+`admin`은 일반 사용자 목록을 검색하고 상세 화면에서 닉네임·활성 상태를 수정하거나 계정과
+상호작용 데이터를 함께 삭제할 수 있습니다. 관련 API는 `GET /api/auth/customers`,
+`GET/PATCH/DELETE /api/auth/customers/:id`입니다.
+
 일반 사용자 OAuth에는 `NUXT_PUBLIC_KAKAO_USER_REDIRECT_URI`와 `KAKAO_USER_REDIRECT_URI`를,
 매장 관리자 OAuth에는 `NUXT_PUBLIC_KAKAO_REDIRECT_URI`와 `KAKAO_REDIRECT_URI`를 사용합니다.
 서로 다른 프론트엔드 도메인을 사용해도 callback 주소가 섞이지 않습니다.

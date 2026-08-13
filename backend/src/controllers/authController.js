@@ -108,6 +108,16 @@ export const kakaoCustomerSignUp = async (req, res, next) => {
 };
 
 const publicCustomer = (customer) => ({ id: customer.id, nickname: customer.nickname, role: 'user' });
+const managedCustomer = (customer) => ({
+  id: customer.id,
+  nickname: customer.nickname,
+  kakaoId: customer.kakaoId,
+  role: 'user',
+  accountType: 'customer',
+  isActive: customer.isActive,
+  createdAt: customer.createdAt,
+  updatedAt: customer.updatedAt
+});
 
 export const kakaoCustomerLogin = async (req, res, next) => {
   try {
@@ -126,6 +136,58 @@ export const deleteCustomerAccount = async (req, res, next) => {
   try {
     await Interaction.deleteMany({ customer: req.customer._id });
     await Customer.deleteOne({ _id: req.customer._id });
+    res.status(204).send();
+  } catch (error) { next(error); }
+};
+
+export const listCustomers = async (req, res, next) => {
+  try {
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 20, 1), 100);
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const filter = {};
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.nickname = { $regex: escaped, $options: 'i' };
+    }
+    const [customers, total] = await Promise.all([
+      Customer.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      Customer.countDocuments(filter)
+    ]);
+    res.json({ items: customers.map(managedCustomer), total, page, limit, totalPages: Math.ceil(total / limit) });
+  } catch (error) { next(error); }
+};
+
+export const getCustomer = async (req, res, next) => {
+  try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) return res.status(404).json({ message: '일반 사용자를 찾을 수 없습니다.' });
+    res.json({ user: managedCustomer(customer) });
+  } catch (error) { next(error); }
+};
+
+export const updateCustomer = async (req, res, next) => {
+  try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) return res.status(404).json({ message: '일반 사용자를 찾을 수 없습니다.' });
+    const nickname = typeof req.body.nickname === 'string' ? req.body.nickname.trim() : undefined;
+    if (nickname !== undefined && !nickname) return res.status(400).json({ message: '닉네임을 입력해 주세요.' });
+    if (req.body.isActive !== undefined && typeof req.body.isActive !== 'boolean') {
+      return res.status(400).json({ message: '활성 상태 값이 올바르지 않습니다.' });
+    }
+    if (nickname !== undefined) customer.nickname = nickname;
+    if (req.body.isActive !== undefined) customer.isActive = req.body.isActive;
+    await customer.save();
+    res.json({ user: managedCustomer(customer) });
+  } catch (error) { next(error); }
+};
+
+export const deleteManagedCustomer = async (req, res, next) => {
+  try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) return res.status(404).json({ message: '일반 사용자를 찾을 수 없습니다.' });
+    await Interaction.deleteMany({ customer: customer._id });
+    await Customer.deleteOne({ _id: customer._id });
     res.status(204).send();
   } catch (error) { next(error); }
 };

@@ -177,6 +177,14 @@ export const openapiDocument = {
         responses: { 200: { description: '사용자 목록', content: { 'application/json': { schema: { $ref: '#/components/schemas/UserList' } } } }, 401: errorResponse('인증 필요'), 403: errorResponse('권한 없음') }
       }
     },
+    '/api/auth/customers': {
+      get: { tags: ['Auth'], summary: '일반 사용자 관리 목록', description: 'master 또는 admin 권한이 필요합니다.', parameters: [{ name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } }, { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } }, { name: 'search', in: 'query', description: '닉네임 검색', schema: { type: 'string' } }], responses: { 200: { description: '일반 사용자 목록' }, 401: errorResponse('인증 필요'), 403: errorResponse('권한 없음') } }
+    },
+    '/api/auth/customers/{id}': {
+      get: { tags: ['Auth'], summary: '일반 사용자 관리 상세', parameters: [idParameter], responses: { 200: { description: '일반 사용자 상세' }, 404: errorResponse('일반 사용자를 찾을 수 없음') } },
+      patch: { tags: ['Auth'], summary: '일반 사용자 정보 수정', description: '닉네임과 활성 상태를 수정합니다.', parameters: [idParameter], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { nickname: { type: 'string' }, isActive: { type: 'boolean' } } } } } }, responses: { 200: { description: '수정된 일반 사용자' }, 400: errorResponse('입력값 오류'), 404: errorResponse('일반 사용자를 찾을 수 없음') } },
+      delete: { tags: ['Auth'], summary: '일반 사용자 계정 삭제', description: '계정과 해당 상호작용을 함께 삭제합니다.', parameters: [idParameter], responses: { 204: { description: '삭제 완료' }, 404: errorResponse('일반 사용자를 찾을 수 없음') } }
+    },
     '/api/auth/users/{id}': {
       get: { tags: ['Auth'], summary: '사용자 상세 조회', description: 'master 또는 admin 권한이 필요합니다.', parameters: [idParameter], responses: { 200: { description: '사용자 상세' }, 404: errorResponse('사용자를 찾을 수 없음') } },
       patch: { tags: ['Auth'], summary: '사용자 정보 수정', description: '닉네임, 권한, 활성 상태를 수정합니다. admin은 master 계정을 수정하거나 master 권한을 부여할 수 없습니다.', parameters: [idParameter], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UserUpdateInput' } } } }, responses: { 200: { description: '수정된 사용자' }, 400: errorResponse('입력값 오류'), 403: errorResponse('권한 없음'), 404: errorResponse('사용자를 찾을 수 없음') } },
