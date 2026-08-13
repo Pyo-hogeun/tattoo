@@ -6,7 +6,11 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 
 ## Gallery account interactions
 
-The gallery sends the customer JWT as a Bearer token when `customer_auth_token` exists. The gallery response may include the current customer's state:
+The backend interactions endpoints are currently unavailable. The production client therefore does not call `/interactions` or the legacy `/gallery/interactions` route. Interaction behavior lives behind `src/services/galleryInteractions.ts`; it returns a clear unavailable state until a backend adapter is implemented.
+
+For explicit local UI development only, set `VITE_ENABLE_INTERACTIONS_MOCK=true`. The mock is additionally restricted to Vite development mode and stores data under `customer_interactions_mock`; production builds ignore the flag. Mock data is not server data and must not be treated as persistence.
+
+When the backend endpoints are implemented, the adapter can send the customer JWT as a Bearer token. The intended gallery response may include the current customer's state:
 
 ```json
 {
@@ -17,7 +21,7 @@ The gallery sends the customer JWT as a Bearer token when `customer_auth_token` 
 }
 ```
 
-Likes and scraps are persisted through `POST /api/gallery/interactions` with this request body:
+The future interactions API contract must be added to the adapter rather than directly to a Vue component. Do not restore the former `POST /api/gallery/interactions` call: that endpoint is not part of the current backend.
 
 ```json
 {
@@ -27,17 +31,17 @@ Likes and scraps are persisted through `POST /api/gallery/interactions` with thi
 }
 ```
 
-`action` is either `like` or `scrap`. The backend must identify the Customer from the application JWT, return `401` when it is missing or invalid, and return the updated interaction state using the response shape above. Persistence should use the Customer primary key plus the gallery key as a unique pair so repeated requests cannot create duplicate likes or scraps.
+`action` is either `like` or `scrap`. Once implemented, the backend must identify the Customer from the application JWT, return `401` when it is missing or invalid, and return the updated interaction state using the response shape above. Persistence should use the Customer primary key plus the gallery key as a unique pair so repeated requests cannot create duplicate likes or scraps.
 
 The JWT issued by the customer signup/login endpoints must identify the Customer collection record expected by the interaction guard. In particular, the token `sub` (or the backend's documented customer-id claim), token audience/type, signing key, and lookup collection must match the interaction authentication middleware. Issuing a token that points to a back-office User ID and then looking it up in Customer produces `유효하지 않은 계정입니다.` even though signup succeeded. The web client sends the returned token unchanged as `Authorization: Bearer <token>` and clears the local customer session when the backend reports an invalid account.
 
 ## Kakao customer signup and uploads
 
-The public customer flow is separate from the shop-partner back office. `/signup` offers both new-customer signup and existing-customer login. Each action creates OAuth `state` with Web Crypto and stores an explicit `user-signup` or `user-login` flow before sending the browser to Kakao. `/auth/kakao/callback` validates both the returned state and flow, then calls `POST /api/auth/kakao/user/signup` for signup or `POST /api/auth/kakao/user/login` for login. It never calls the shop-partner endpoints. The callback claims and removes its one-time OAuth state before exchanging the authorization code, preventing a refresh or remount from sending the code twice.
+The public customer flow is separate from the shop-partner back office. Only `POST /api/auth/kakao/user/signup` currently exists. `/signup` starts the `user-signup` OAuth flow and `/auth/kakao/callback` validates its state before calling that endpoint. Existing-customer login is visibly marked as unavailable and the frontend never calls the unimplemented `/api/auth/kakao/user/login`, `/api/auth/user/me`, or `/api/auth/user/me` deletion endpoints. The callback claims and removes its one-time OAuth state before exchanging the authorization code, preventing a refresh or remount from sending the code twice.
 
 The authorize request explicitly asks Kakao for the `profile_nickname` scope. The backend must read the nickname from the Kakao user-info response (normally the Kakao account profile), persist that value on Customer, and return it as `user.nickname`. It must not replace a present Kakao nickname with a static `사용자` value. If Kakao does not return a nickname, verify that the Kakao app has the nickname consent item enabled and inspect the user-info response/consent state before applying a fallback.
 
-Signup must return `201`, and login must return `200`. Both responses must contain `{ "token", "user": { "id", "nickname", "role": "user" } }`. Customer credentials are stored only under `customer_auth_token` and `customer_auth_user`; the back-office keys `auth_token` and `auth_user` are not read or changed. The Kakao client secret, access-token exchange, profile lookup, duplicate-customer validation, and Customer creation remain backend responsibilities.
+Signup must return `201` with `{ "token", "user": { "id", "nickname", "role": "user" } }`. Customer credentials are stored only under `customer_auth_token` and `customer_auth_user`; the back-office keys `auth_token` and `auth_user` are not read or changed. Local logout only clears this frontend session because the backend account/session endpoints are not implemented. The Kakao client secret, access-token exchange, profile lookup, duplicate-customer validation, and Customer creation remain backend responsibilities.
 
 ### Diagnosing contradictory duplicate and not-found responses
 
@@ -49,7 +53,8 @@ Required web configuration:
 
 ```env
 VITE_KAKAO_CLIENT_ID=your_kakao_rest_api_key
-VITE_KAKAO_REDIRECT_URI=http://localhost:5173/auth/kakao/callback
+VITE_KAKAO_USER_REDIRECT_URI=http://localhost:5173/auth/kakao/callback
+VITE_ENABLE_INTERACTIONS_MOCK=false
 ```
 
 The redirect URI must exactly match the backend `KAKAO_REDIRECT_URI` and Kakao developer-console registration. The backend must also allow the web origin through `FRONTEND_ORIGIN_USER`. Authenticated customer uploads use `POST /api/gallery` with the customer bearer token and multipart fields `image`, `title`, and `description`.

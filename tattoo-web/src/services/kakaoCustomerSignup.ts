@@ -1,7 +1,6 @@
 export const KAKAO_OAUTH_STATE_KEY = 'kakao_oauth_state'
 export const KAKAO_OAUTH_FLOW_KEY = 'kakao_oauth_flow'
 export const KAKAO_USER_SIGNUP_FLOW = 'user-signup'
-export const KAKAO_USER_LOGIN_FLOW = 'user-login'
 export const LEGACY_SHOP_SIGNUP_KEY = 'signup_shop'
 
 export function clearKakaoSignupSession() {
@@ -10,13 +9,11 @@ export function clearKakaoSignupSession() {
   sessionStorage.removeItem(LEGACY_SHOP_SIGNUP_KEY)
 }
 
-export type KakaoCustomerFlow = typeof KAKAO_USER_SIGNUP_FLOW | typeof KAKAO_USER_LOGIN_FLOW
-
-export function createKakaoCustomerAuthUrl(clientId: string, redirectUri: string, flow: KakaoCustomerFlow) {
+export function createKakaoCustomerAuthUrl(clientId: string, redirectUri: string) {
   const state = crypto.randomUUID()
 
   sessionStorage.setItem(KAKAO_OAUTH_STATE_KEY, state)
-  sessionStorage.setItem(KAKAO_OAUTH_FLOW_KEY, flow)
+  sessionStorage.setItem(KAKAO_OAUTH_FLOW_KEY, KAKAO_USER_SIGNUP_FLOW)
   sessionStorage.removeItem(LEGACY_SHOP_SIGNUP_KEY)
 
   const query = new URLSearchParams({
@@ -37,10 +34,9 @@ export function validateKakaoCustomerCallback(search: string) {
   const storedState = sessionStorage.getItem(KAKAO_OAUTH_STATE_KEY)
   const storedFlow = sessionStorage.getItem(KAKAO_OAUTH_FLOW_KEY)
 
-  const isCustomerFlow = storedFlow === KAKAO_USER_SIGNUP_FLOW || storedFlow === KAKAO_USER_LOGIN_FLOW
-  if (!code || !state || !storedState || state !== storedState || !isCustomerFlow) {
+  if (!code || !state || !storedState || state !== storedState || storedFlow !== KAKAO_USER_SIGNUP_FLOW) {
     return null
   }
 
-  return { code, flow: storedFlow }
+  return { code }
 }
