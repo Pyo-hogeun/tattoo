@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { apiBaseUrl } from '../services/auth'
-import { getCustomerAuthorizationHeaders, restoreCustomerSession } from '../services/customerAuth'
+import { clearCustomerSession, getCustomerAuthorizationHeaders, restoreCustomerSession } from '../services/customerAuth'
 
 interface GalleryItem {
   _id: string
@@ -43,6 +43,10 @@ interface GalleryInteractionResponse {
   scrapped: boolean
   likeCount: number
   scrapCount: number
+}
+
+interface GalleryInteractionError {
+  message?: unknown
 }
 
 const INITIAL_ITEM_COUNT = 10
@@ -114,18 +118,38 @@ async function toggleGalleryInteraction(item: GalleryItem, action: 'like' | 'scr
   pendingActions.value = new Set(pendingActions.value).add(pendingKey)
 
   try {
-    const response = await fetch(`${GALLERY_API_URL}/interactions`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...getCustomerAuthorizationHeaders() },
-      body: JSON.stringify({ key: item.key, action, active }),
-    })
-
-    if (response.status === 401) {
+    restoreCustomerSession()
+    const authorizationHeaders = getCustomerAuthorizationHeaders()
+    if (!authorizationHeaders.Authorization) {
       setActionMessage('로그인 후 저장할 수 있어요.')
       return
     }
-    if (!response.ok) throw new Error(`Request failed: ${response.status}`)
+
+    const response = await fetch(`${GALLERY_API_URL}/interactions`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...authorizationHeaders },
+      body: JSON.stringify({ key: item.key, action, active }),
+    })
+
+    if (!response.ok) {
+      let serverMessage = ''
+      try {
+        const error = await response.json() as GalleryInteractionError
+        serverMessage = typeof error.message === 'string' ? error.message.trim() : ''
+      } catch {
+        // Preserve the status-based fallback for empty or non-JSON responses.
+      }
+
+      if (response.status === 401 || serverMessage === '유효하지 않은 계정입니다.') {
+        clearCustomerSession()
+        setActionMessage(serverMessage || '로그인이 만료되었습니다. 다시 로그인해 주세요.')
+        return
+      }
+
+      setActionMessage(serverMessage || '요청을 처리하지 못했어요. 다시 시도해 주세요.')
+      return
+    }
 
     const result = await response.json() as GalleryInteractionResponse
     item.liked = result.liked
@@ -136,7 +160,7 @@ async function toggleGalleryInteraction(item: GalleryItem, action: 'like' | 'scr
       ? (item.liked ? '좋아요에 저장했어요.' : '좋아요를 취소했어요.')
       : (item.scrapped ? '스크랩에 저장했어요.' : '스크랩을 취소했어요.'))
   } catch {
-    setActionMessage('요청을 처리하지 못했어요. 다시 시도해 주세요.')
+    setActionMessage('서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.')
   } finally {
     const nextPendingActions = new Set(pendingActions.value)
     nextPendingActions.delete(pendingKey)

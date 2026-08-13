@@ -29,9 +29,13 @@ Likes and scraps are persisted through `POST /api/gallery/interactions` with thi
 
 `action` is either `like` or `scrap`. The backend must identify the Customer from the application JWT, return `401` when it is missing or invalid, and return the updated interaction state using the response shape above. Persistence should use the Customer primary key plus the gallery key as a unique pair so repeated requests cannot create duplicate likes or scraps.
 
+The JWT issued by the customer signup/login endpoints must identify the Customer collection record expected by the interaction guard. In particular, the token `sub` (or the backend's documented customer-id claim), token audience/type, signing key, and lookup collection must match the interaction authentication middleware. Issuing a token that points to a back-office User ID and then looking it up in Customer produces `유효하지 않은 계정입니다.` even though signup succeeded. The web client sends the returned token unchanged as `Authorization: Bearer <token>` and clears the local customer session when the backend reports an invalid account.
+
 ## Kakao customer signup and uploads
 
 The public customer flow is separate from the shop-partner back office. `/signup` offers both new-customer signup and existing-customer login. Each action creates OAuth `state` with Web Crypto and stores an explicit `user-signup` or `user-login` flow before sending the browser to Kakao. `/auth/kakao/callback` validates both the returned state and flow, then calls `POST /api/auth/kakao/user/signup` for signup or `POST /api/auth/kakao/user/login` for login. It never calls the shop-partner endpoints. The callback claims and removes its one-time OAuth state before exchanging the authorization code, preventing a refresh or remount from sending the code twice.
+
+The authorize request explicitly asks Kakao for the `profile_nickname` scope. The backend must read the nickname from the Kakao user-info response (normally the Kakao account profile), persist that value on Customer, and return it as `user.nickname`. It must not replace a present Kakao nickname with a static `사용자` value. If Kakao does not return a nickname, verify that the Kakao app has the nickname consent item enabled and inspect the user-info response/consent state before applying a fallback.
 
 Signup must return `201`, and login must return `200`. Both responses must contain `{ "token", "user": { "id", "nickname", "role": "user" } }`. Customer credentials are stored only under `customer_auth_token` and `customer_auth_user`; the back-office keys `auth_token` and `auth_user` are not read or changed. The Kakao client secret, access-token exchange, profile lookup, duplicate-customer validation, and Customer creation remain backend responsibilities.
 

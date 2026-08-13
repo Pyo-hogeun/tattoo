@@ -24,6 +24,7 @@ export function createKakaoCustomerAuthUrl(clientId: string, redirectUri: string
     redirect_uri: redirectUri,
     response_type: 'code',
     state,
+    scope: 'profile_nickname',
   })
 
   return `https://kauth.kakao.com/oauth/authorize?${query.toString()}`
