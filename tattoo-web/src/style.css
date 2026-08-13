@@ -164,6 +164,8 @@ nav { display: flex; align-items: stretch; height: 88px; }
 .auth-callback { min-height: calc(100svh - 88px); padding: 30px; display: grid; place-content: center; justify-items: center; gap: 16px; text-align: center; }
 .auth-callback h1 { margin: 0; font: 600 42px 'Playfair Display', Georgia, serif; }
 .auth-callback p { max-width: 520px; margin: 0; color: #666159; font-size: 13px; line-height: 1.6; }
+.auth-callback .auth-error-help { max-width: 620px; padding: 14px 16px; border: 1px solid #d7d1c5; background: #f7f4ed; color: #514c44; text-align: left; }
+.auth-callback .auth-error-reference { padding: 7px 10px; border-radius: 3px; background: #ebe7de; color: #5d574f; font: 11px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; }
 .auth-return-button { min-width: 220px; margin-top: 10px; padding: 15px 20px; color: #fff; background: #292824; text-decoration: none; }
 .auth-result-icon { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #292824; font-size: 25px; }
 .auth-result-icon--error { background: #b33b28; }

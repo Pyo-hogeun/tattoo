@@ -35,6 +35,12 @@ The public customer flow is separate from the shop-partner back office. `/signup
 
 Signup must return `201`, and login must return `200`. Both responses must contain `{ "token", "user": { "id", "nickname", "role": "user" } }`. Customer credentials are stored only under `customer_auth_token` and `customer_auth_user`; the back-office keys `auth_token` and `auth_user` are not read or changed. The Kakao client secret, access-token exchange, profile lookup, duplicate-customer validation, and Customer creation remain backend responsibilities.
 
+### Diagnosing contradictory duplicate and not-found responses
+
+If signup returns `409` while login with the same Kakao account returns `404`, deleting only the back-office User is not sufficient evidence that every identity record was removed. Check the backend for a Customer record (including soft-deleted or inactive records), a separate OAuth/provider identity collection, stale unique indexes, and whether signup and login use the same Kakao app/client ID and the same normalized provider user ID. Signup duplicate detection and login lookup must query the same Customer identity scope. A partner identity must not be accepted as a Customer session.
+
+Error responses should include a stable machine-readable `code` and an `X-Request-Id` header. The callback displays those non-secret values with the HTTP status so the matching server log can be located without exposing the Kakao authorization code or JWT.
+
 Required web configuration:
 
 ```env

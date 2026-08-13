@@ -10,16 +10,36 @@ import {
 import { navigate } from '../router'
 
 const errorMessage = ref('')
+const errorReference = ref('')
+const errorHelp = ref('')
 const isProcessing = ref(false)
 const isLoginFlow = ref(false)
 let hasProcessedCallback = false
 
-async function readErrorMessage(response: Response, fallback: string) {
+interface ApiErrorBody {
+  code?: unknown
+  errorCode?: unknown
+  message?: unknown
+}
+
+async function readApiError(response: Response, fallback: string) {
+  let body: ApiErrorBody = {}
   try {
-    const body = await response.json() as { message?: string }
-    return body.message || fallback
+    body = await response.json() as ApiErrorBody
   } catch {
-    return fallback
+    // Some proxies and server errors return an empty or non-JSON response.
+  }
+
+  const message = typeof body.message === 'string' && body.message.trim()
+    ? body.message.trim()
+    : fallback
+  const codeValue = typeof body.code === 'string' ? body.code : body.errorCode
+  const code = typeof codeValue === 'string' && codeValue.trim() ? codeValue.trim() : ''
+  const requestId = response.headers.get('x-request-id')?.trim() ?? ''
+
+  return {
+    message,
+    reference: [`HTTP ${response.status}`, code, requestId].filter(Boolean).join(' · '),
   }
 }
 
@@ -63,7 +83,14 @@ async function completeCustomerAuth() {
         : response.status === 503
           ? '현재 카카오 회원가입을 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.'
           : '카카오 인증 정보를 확인하지 못했습니다. 회원가입을 다시 시도해 주세요.'
-      errorMessage.value = await readErrorMessage(response, fallback)
+      const error = await readApiError(response, fallback)
+      errorMessage.value = error.message
+      errorReference.value = error.reference
+      if (response.status === 409 && !isLoginFlow.value) {
+        errorHelp.value = '백오피스 계정을 삭제했는데도 반복된다면 Customer 또는 OAuth 연결 데이터가 남아 있거나, 회원가입과 로그인이 서로 다른 사용자 범위를 조회하고 있을 수 있습니다. 아래 오류 정보를 백엔드 담당자에게 전달해 주세요.'
+      } else if (response.status === 404 && isLoginFlow.value) {
+        errorHelp.value = '회원가입에서는 중복으로 판단했지만 로그인에서는 Customer를 찾지 못한 상태입니다. 프론트엔드가 임의로 계정을 합치지 않으며, 백엔드의 Customer 및 OAuth 연결 데이터 확인이 필요합니다.'
+      }
       return
     }
 
@@ -95,6 +122,8 @@ onMounted(completeCustomerAuth)
       <div class="auth-result-icon auth-result-icon--error" aria-hidden="true">!</div>
       <h1>{{ isLoginFlow ? '로그인하지 못했어요.' : '회원가입을 완료하지 못했어요.' }}</h1>
       <p role="alert">{{ errorMessage }}</p>
+      <p v-if="errorHelp" class="auth-error-help">{{ errorHelp }}</p>
+      <p v-if="errorReference" class="auth-error-reference">오류 정보: {{ errorReference }}</p>
       <a class="auth-return-button" href="/signup">카카오 인증 화면으로 돌아가기</a>
     </template>
     <template v-else>
