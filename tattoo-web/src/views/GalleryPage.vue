@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { apiBaseUrl } from '../services/auth'
-import { getCustomerAuthorizationHeaders, restoreCustomerSession } from '../services/customerAuth'
+import { customerToken, restoreCustomerSession } from '../services/customerAuth'
 import {
-  InteractionsUnavailableError,
-  isInteractionsMockEnabled,
-  updateGalleryInteraction,
+  findInteraction,
+  galleryInteractions,
+  isInteractionPending,
+  loadGalleryInteractions,
+  toggleGalleryInteraction as toggleStoredInteraction,
 } from '../services/galleryInteractions'
+import { InteractionApiError } from '../services/interactionsApi'
+import type { InteractionType } from '../types/interaction'
 
 interface GalleryItem {
   _id: string
@@ -16,10 +20,8 @@ interface GalleryItem {
   publishedAt: string
   title: string
   description: string
-  liked: boolean
-  scrapped: boolean
   likeCount: number
-  scrapCount: number
+  bookmarkCount: number
 }
 
 interface GalleryApiItem {
@@ -32,9 +34,8 @@ interface GalleryApiItem {
   publishedAt: string
   title: string
   description: string
-  liked?: boolean
-  scrapped?: boolean
   likeCount?: number
+  bookmarkCount?: number
   scrapCount?: number
 }
 
@@ -54,7 +55,6 @@ const isLoading = ref(true)
 const isLoadingMore = ref(false)
 const errorMessage = ref('')
 const selectedItem = ref<GalleryItem | null>(null)
-const pendingActions = ref(new Set<string>())
 const actionMessage = ref('')
 const loadMoreTrigger = useTemplateRef<HTMLElement>('loadMoreTrigger')
 let loadMoreObserver: IntersectionObserver | undefined
@@ -62,6 +62,8 @@ let actionMessageTimer: number | undefined
 
 const visibleItems = computed(() => galleryItems.value.slice(0, visibleCount.value))
 const hasMoreItems = computed(() => visibleCount.value < galleryItems.value.length)
+const interactionErrorMessage = galleryInteractions.errorMessage
+const interactionsLoading = galleryInteractions.loading
 
 function getImageUrl(imageUrl: string) {
   if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith('data:')) return imageUrl
@@ -100,43 +102,44 @@ function setActionMessage(message: string) {
   }, 2400)
 }
 
-function isActionPending(item: GalleryItem, action: 'like' | 'scrap') {
-  return pendingActions.value.has(`${item.key}:${action}`)
+function isLiked(item: GalleryItem) {
+  return Boolean(customerToken.value && findInteraction(item.key, 'like'))
 }
 
-async function toggleGalleryInteraction(item: GalleryItem, action: 'like' | 'scrap') {
-  const pendingKey = `${item.key}:${action}`
-  if (pendingActions.value.has(pendingKey)) return
+function isBookmarked(item: GalleryItem) {
+  return Boolean(customerToken.value && findInteraction(item.key, 'bookmark'))
+}
 
-  const active = action === 'like' ? !item.liked : !item.scrapped
-  pendingActions.value = new Set(pendingActions.value).add(pendingKey)
-
+async function toggleGalleryInteraction(item: GalleryItem, type: InteractionType) {
+  restoreCustomerSession()
+  if (!customerToken.value) {
+    setActionMessage('로그인이 필요한 기능입니다.')
+    return
+  }
   try {
-    if (!isInteractionsMockEnabled()) throw new InteractionsUnavailableError()
-
-    restoreCustomerSession()
-    const authorizationHeaders = getCustomerAuthorizationHeaders()
-    if (!authorizationHeaders.Authorization) {
-      setActionMessage('로그인 후 저장할 수 있어요.')
+    const result = await toggleStoredInteraction(item.key, type)
+    if (!result) return
+    if (type === 'like') item.likeCount = Math.max(0, item.likeCount + (result.active ? 1 : -1))
+    else item.bookmarkCount = Math.max(0, item.bookmarkCount + (result.active ? 1 : -1))
+    if (result.alreadyRemoved) {
+      setActionMessage('이미 삭제되었거나 상호작용 정보를 찾을 수 없습니다.')
       return
     }
-
-    const result = await updateGalleryInteraction(item.key, action, active, item)
-    item.liked = result.liked
-    item.scrapped = result.scrapped
-    item.likeCount = result.likeCount
-    item.scrapCount = result.scrapCount
-    setActionMessage(action === 'like'
-      ? (item.liked ? '좋아요에 저장했어요.' : '좋아요를 취소했어요.')
-      : (item.scrapped ? '스크랩에 저장했어요.' : '스크랩을 취소했어요.'))
+    setActionMessage(type === 'like'
+      ? (result.active ? '좋아요에 저장했어요.' : '좋아요를 취소했어요.')
+      : (result.active ? '북마크에 저장했어요.' : '북마크를 취소했어요.'))
   } catch (error) {
-    setActionMessage(error instanceof InteractionsUnavailableError
+    setActionMessage(error instanceof InteractionApiError
       ? error.message
       : '요청을 처리하지 못했어요. 다시 시도해 주세요.')
-  } finally {
-    const nextPendingActions = new Set(pendingActions.value)
-    nextPendingActions.delete(pendingKey)
-    pendingActions.value = nextPendingActions
+  }
+}
+
+async function retryInteractions() {
+  try {
+    await loadGalleryInteractions()
+  } catch {
+    // Keep the public gallery visible while the interaction error remains actionable.
   }
 }
 
@@ -199,11 +202,7 @@ async function loadGalleryImages() {
   errorMessage.value = ''
 
   try {
-    restoreCustomerSession()
-    const response = await fetch(GALLERY_API_URL, {
-      credentials: 'include',
-      headers: getCustomerAuthorizationHeaders(),
-    })
+    const response = await fetch(GALLERY_API_URL)
     if (!response.ok) throw new Error(`Request failed: ${response.status}`)
 
     const payload = await response.json() as GalleryResponse
@@ -215,12 +214,18 @@ async function loadGalleryImages() {
       publishedAt: item.publishedAt,
       title: item.title || getGalleryItemName(item.key),
       description: item.description,
-      liked: item.liked ?? false,
-      scrapped: item.scrapped ?? false,
       likeCount: item.likeCount ?? 0,
-      scrapCount: item.scrapCount ?? 0,
+      bookmarkCount: item.bookmarkCount ?? item.scrapCount ?? 0,
     }))
     visibleCount.value = INITIAL_ITEM_COUNT
+    restoreCustomerSession()
+    if (customerToken.value) {
+      try {
+        await loadGalleryInteractions()
+      } catch {
+        // Interaction failures must not hide the public gallery.
+      }
+    }
   } catch {
     errorMessage.value = '갤러리를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
   } finally {
@@ -254,6 +259,12 @@ onBeforeUnmount(() => {
       <button type="button" class="text-button" @click="loadGalleryImages">다시 시도</button>
     </div>
     <template v-else-if="visibleItems.length">
+      <div v-if="customerToken && interactionErrorMessage" class="interaction-status" role="alert">
+        <span>{{ interactionErrorMessage }}</span>
+        <button type="button" :disabled="interactionsLoading" @click="retryInteractions">
+          {{ interactionsLoading ? '확인 중…' : '다시 시도' }}
+        </button>
+      </div>
       <div class="art-wall">
         <article class="brow-card brow-card--title">
           <div class="gallery-title-overlay">
@@ -286,14 +297,15 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="save-button"
-              :class="{ active: item.scrapped }"
-              :aria-label="item.scrapped ? `${item.title} 스크랩 취소` : `${item.title} 스크랩`"
-              :aria-pressed="item.scrapped"
-              :disabled="isActionPending(item, 'scrap')"
-              @click.stop="toggleGalleryInteraction(item, 'scrap')"
+              :class="{ active: isBookmarked(item) }"
+              :aria-label="isBookmarked(item) ? `${item.title} 북마크 취소` : `${item.title} 북마크`"
+              :aria-pressed="isBookmarked(item)"
+              :aria-busy="isInteractionPending(item.key, 'bookmark')"
+              :disabled="isInteractionPending(item.key, 'bookmark')"
+              @click.stop="toggleGalleryInteraction(item, 'bookmark')"
               @keydown.stop
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" :fill="item.scrapped ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" :fill="isBookmarked(item) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
             </button>
           </div>
           <div class="brow-card__caption">
@@ -346,13 +358,14 @@ onBeforeUnmount(() => {
             <div class="detail-actions" aria-label="게시물 액션">
               <button
                 type="button"
-                :class="{ active: selectedItem.liked }"
-                :aria-label="selectedItem.liked ? '좋아요 취소' : '좋아요'"
-                :aria-pressed="selectedItem.liked"
-                :disabled="isActionPending(selectedItem, 'like')"
+                :class="{ active: isLiked(selectedItem) }"
+                :aria-label="isLiked(selectedItem) ? '좋아요 취소' : '좋아요'"
+                :aria-pressed="isLiked(selectedItem)"
+                :aria-busy="isInteractionPending(selectedItem.key, 'like')"
+                :disabled="isInteractionPending(selectedItem.key, 'like')"
                 @click="toggleGalleryInteraction(selectedItem, 'like')"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.8l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.5a5.5 5.5 0 0 0 0-7.8Z" :fill="selectedItem.liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5"/></svg>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.8l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.5a5.5 5.5 0 0 0 0-7.8Z" :fill="isLiked(selectedItem) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5"/></svg>
                 <span>{{ selectedItem.likeCount }}</span>
               </button>
               <button type="button" aria-label="게시물 공유" @click="shareGalleryItem(selectedItem)">
@@ -361,14 +374,15 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="detail-scrap-button"
-                :class="{ active: selectedItem.scrapped }"
-                :aria-label="selectedItem.scrapped ? '스크랩 취소' : '스크랩'"
-                :aria-pressed="selectedItem.scrapped"
-                :disabled="isActionPending(selectedItem, 'scrap')"
-                @click="toggleGalleryInteraction(selectedItem, 'scrap')"
+                :class="{ active: isBookmarked(selectedItem) }"
+                :aria-label="isBookmarked(selectedItem) ? '북마크 취소' : '북마크'"
+                :aria-pressed="isBookmarked(selectedItem)"
+                :aria-busy="isInteractionPending(selectedItem.key, 'bookmark')"
+                :disabled="isInteractionPending(selectedItem.key, 'bookmark')"
+                @click="toggleGalleryInteraction(selectedItem, 'bookmark')"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" :fill="selectedItem.scrapped ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-                <span>{{ selectedItem.scrapCount }}</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v16L12 17l-5.5 3.5v-16Z" :fill="isBookmarked(selectedItem) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                <span>{{ selectedItem.bookmarkCount }}</span>
               </button>
             </div>
             <div class="detail-copy">

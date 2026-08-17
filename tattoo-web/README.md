@@ -6,32 +6,46 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 
 ## Gallery account interactions
 
-The backend interactions endpoints are currently unavailable. The production client therefore does not call `/interactions` or the legacy `/gallery/interactions` route. Interaction behavior lives behind `src/services/galleryInteractions.ts`; it returns a clear unavailable state until a backend adapter is implemented.
+Gallery likes and bookmarks use the implemented customer-only interactions API through `src/services/interactionsApi.ts`. Every request uses the Customer JWT from `customer_auth_token`; back-office keys are never read. Gallery `key` is used as `targetId`, while DELETE uses the interaction object's server-issued `id`.
 
-For explicit local UI development only, set `VITE_ENABLE_INTERACTIONS_MOCK=true`. The mock is additionally restricted to Vite development mode and stores data under `customer_interactions_mock`; production builds ignore the flag. Mock data is not server data and must not be treated as persistence.
+Supported endpoints:
 
-When the backend endpoints are implemented, the adapter can send the customer JWT as a Bearer token. The intended gallery response may include the current customer's state:
+```text
+GET    /api/interactions
+POST   /api/interactions
+DELETE /api/interactions/:id
+```
+
+The interaction list response contains the current customer's state:
 
 ```json
 {
-  "liked": true,
-  "scrapped": false,
-  "likeCount": 12,
-  "scrapCount": 4
+  "items": [
+    {
+      "id": "68a1234567890abcdef1234",
+      "customerId": "68a9876543210abcdef9876",
+      "targetType": "gallery",
+      "targetId": "gallery/example.png",
+      "type": "like",
+      "createdAt": "2026-08-17T10:00:00.000Z",
+      "updatedAt": "2026-08-17T10:00:00.000Z"
+    }
+  ],
+  "total": 1
 }
 ```
 
-The future interactions API contract must be added to the adapter rather than directly to a Vue component. Do not restore the former `POST /api/gallery/interactions` call: that endpoint is not part of the current backend.
+Creation uses `type: "like"` or `type: "bookmark"` and always targets a gallery key:
 
 ```json
 {
-  "key": "gallery/example.png",
-  "action": "like",
-  "active": true
+  "targetType": "gallery",
+  "targetId": "gallery/example.png",
+  "type": "like"
 }
 ```
 
-`action` is either `like` or `scrap`. Once implemented, the backend must identify the Customer from the application JWT, return `401` when it is missing or invalid, and return the updated interaction state using the response shape above. Persistence should use the Customer primary key plus the gallery key as a unique pair so repeated requests cannot create duplicate likes or scraps.
+The backend identifies the Customer from the JWT, so the client never sends `customerId`. A `401` clears only `customer_auth_token` and `customer_auth_user`; a `403` reports the wrong token type without touching back-office storage. A missing DELETE target is removed from local state because it is already absent server-side.
 
 The JWT issued by the customer signup/login endpoints must identify the Customer collection record expected by the interaction guard. In particular, the token `sub` (or the backend's documented customer-id claim), token audience/type, signing key, and lookup collection must match the interaction authentication middleware. Issuing a token that points to a back-office User ID and then looking it up in Customer produces `유효하지 않은 계정입니다.` even though signup succeeded. The web client sends the returned token unchanged as `Authorization: Bearer <token>` and clears the local customer session when the backend reports an invalid account.
 
@@ -54,7 +68,6 @@ Required web configuration:
 ```env
 VITE_KAKAO_CLIENT_ID=your_kakao_rest_api_key
 VITE_KAKAO_USER_REDIRECT_URI=http://localhost:5173/auth/kakao/callback
-VITE_ENABLE_INTERACTIONS_MOCK=false
 ```
 
 The redirect URI must exactly match the backend `KAKAO_REDIRECT_URI` and Kakao developer-console registration. The backend must also allow the web origin through `FRONTEND_ORIGIN_USER`. Authenticated customer uploads use `POST /api/gallery` with the customer bearer token and multipart fields `image`, `title`, and `description`.

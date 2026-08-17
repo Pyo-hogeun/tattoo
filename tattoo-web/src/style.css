@@ -101,6 +101,9 @@ nav { display: flex; align-items: stretch; height: 88px; }
 .detail-back-button { width: 38px; height: 38px; padding: 8px; border: 0; color: #1b1a18; background: transparent; }
 .detail-back-button svg { width: 100%; height: 100%; }
 .gallery-action-message { position: fixed; z-index: 120; left: 50%; bottom: 28px; transform: translateX(-50%); max-width: min(360px, calc(100vw - 32px)); margin: 0; padding: 11px 16px; border-radius: 2px; color: #fff; background: rgba(25,24,22,.92); box-shadow: 0 8px 30px rgba(0,0,0,.2); font-size: 11px; text-align: center; }
+.interaction-status { margin: 14px 2.1vw; padding: 10px 12px; display: flex; align-items: center; justify-content: center; gap: 12px; color: #6b3b31; background: #f3e7e2; font-size: 11px; }
+.interaction-status button { border: 0; border-bottom: 1px solid currentColor; padding: 2px 0; color: inherit; background: transparent; cursor: pointer; font: inherit; }
+.interaction-status button:disabled { cursor: wait; opacity: .55; }
 
 @media (max-width: 1000px) {
   .gallery-page { padding-inline: 8px; }
