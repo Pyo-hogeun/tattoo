@@ -1,6 +1,7 @@
 export const KAKAO_OAUTH_STATE_KEY = 'kakao_oauth_state'
 export const KAKAO_OAUTH_FLOW_KEY = 'kakao_oauth_flow'
 export const KAKAO_USER_SIGNUP_FLOW = 'user-signup'
+export const KAKAO_PROFILE_NICKNAME_SCOPE = 'profile_nickname'
 export const LEGACY_SHOP_SIGNUP_KEY = 'signup_shop'
 
 export function clearKakaoSignupSession() {
@@ -21,6 +22,7 @@ export function createKakaoCustomerAuthUrl(clientId: string, redirectUri: string
     redirect_uri: redirectUri,
     response_type: 'code',
     state,
+    scope: KAKAO_PROFILE_NICKNAME_SCOPE,
   })
 
   return `https://kauth.kakao.com/oauth/authorize?${query.toString()}`
