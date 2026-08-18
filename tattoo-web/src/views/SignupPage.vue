@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import {
   createKakaoCustomerAuthUrl,
+  KAKAO_USER_LOGIN_FLOW,
+  KAKAO_USER_SIGNUP_FLOW,
 } from '../services/kakaoCustomerSignup'
 
 const isPrivacyAgreed = ref(false)
@@ -28,7 +30,18 @@ function startUserSignup() {
   }
 
   isStarting.value = true
-  window.location.assign(createKakaoCustomerAuthUrl(config.clientId, config.redirectUri))
+  window.location.assign(createKakaoCustomerAuthUrl(config.clientId, config.redirectUri, KAKAO_USER_SIGNUP_FLOW))
+}
+
+function startUserLogin() {
+  errorMessage.value = ''
+  const config = getKakaoConfig()
+  if (!config) {
+    errorMessage.value = '카카오 로그인 환경 설정이 누락되었습니다.'
+    return
+  }
+  isStarting.value = true
+  window.location.assign(createKakaoCustomerAuthUrl(config.clientId, config.redirectUri, KAKAO_USER_LOGIN_FLOW))
 }
 </script>
 
@@ -52,11 +65,10 @@ function startUserSignup() {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.2 4.8 6.6L5.6 22l5.1-3c.4 0 .9.1 1.3.1 5.5 0 10-3.5 10-8.2C22 6.5 17.5 3 12 3Z" fill="currentColor"/></svg>
           {{ isStarting ? '카카오로 이동 중…' : '카카오로 회원가입' }}
         </button>
-        <button type="button" class="kakao-login-button kakao-login-button--existing" disabled aria-describedby="customer-login-unavailable">
-          기존 회원 로그인 준비 중
+        <button type="button" class="kakao-login-button kakao-login-button--existing" :disabled="isStarting" @click="startUserLogin">
+          {{ isStarting ? '카카오로 이동 중…' : '기존 회원 카카오 로그인' }}
         </button>
       </div>
-      <p id="customer-login-unavailable" class="auth-terms">일반 사용자 로그인 API가 준비되면 사용할 수 있습니다. 현재는 회원가입만 지원합니다.</p>
       <p class="auth-terms">일반 사용자 전용 화면입니다. 매장 파트너 및 백오피스 인증은 제공하지 않습니다.</p>
     </div>
   </section>

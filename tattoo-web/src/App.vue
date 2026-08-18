@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { currentRoute, navigate, routes } from './router'
-import { clearCustomerSession, customerUser, restoreCustomerSession } from './services/customerAuth'
+import { clearCustomerSession, customerToken, customerUser, isCustomerUser, restoreCustomerSession, saveCustomerSession } from './services/customerAuth'
+import { CustomerAuthApiError, getCurrentCustomer } from './services/customerAuthApi'
 
 const activeRoute = computed(() => currentRoute.value)
 
@@ -17,7 +18,19 @@ function handleLogout() {
   navigate('/')
 }
 
-onMounted(restoreCustomerSession)
+onMounted(async () => {
+  restoreCustomerSession()
+  if (!customerToken.value) return
+  try {
+    const response = await getCurrentCustomer()
+    if (!isCustomerUser(response.user)) throw new Error('Invalid customer response')
+    saveCustomerSession({ token: customerToken.value, user: response.user })
+  } catch (error) {
+    if (error instanceof CustomerAuthApiError && (error.status === 401 || error.status === 403)) {
+      clearCustomerSession()
+    }
+  }
+})
 </script>
 
 <template>
@@ -48,7 +61,7 @@ onMounted(restoreCustomerSession)
 
       <div class="account-area">
         <button v-if="!customerUser" class="account-button" type="button" @click="navigate('/signup')">
-          <span>Sign up</span>
+          <span>Login</span>
         </button>
         <template v-else>
           <div class="signed-in-account" :aria-label="`${customerUser.nickname} 일반 회원으로 로그인 중`">

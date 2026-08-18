@@ -6,12 +6,12 @@ export interface CustomerUser {
   role: 'user'
 }
 
-export interface CustomerSignupResponse {
+export interface CustomerAuthResponse {
   token: string
   user: CustomerUser
 }
 
-function isCustomerUser(value: unknown): value is CustomerUser {
+export function isCustomerUser(value: unknown): value is CustomerUser {
   if (!value || typeof value !== 'object') return false
   const user = value as Partial<CustomerUser>
   return typeof user.id === 'string'
@@ -21,9 +21,9 @@ function isCustomerUser(value: unknown): value is CustomerUser {
     && user.role === 'user'
 }
 
-export function isCustomerSignupResponse(value: unknown): value is CustomerSignupResponse {
+export function isCustomerAuthResponse(value: unknown): value is CustomerAuthResponse {
   if (!value || typeof value !== 'object') return false
-  const response = value as Partial<CustomerSignupResponse>
+  const response = value as Partial<CustomerAuthResponse>
   return typeof response.token === 'string' && response.token.length > 0 && isCustomerUser(response.user)
 }
 
@@ -53,8 +53,8 @@ export function restoreCustomerSession() {
   }
 }
 
-export function saveCustomerSession(data: CustomerSignupResponse) {
-  if (!isCustomerSignupResponse(data)) throw new Error('Invalid customer signup response')
+export function saveCustomerSession(data: CustomerAuthResponse) {
+  if (!isCustomerAuthResponse(data)) throw new Error('Invalid customer auth response')
 
   localStorage.setItem(CUSTOMER_TOKEN_KEY, data.token)
   localStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(data.user))
