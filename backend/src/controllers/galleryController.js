@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import path from 'path';
 import { DeleteObjectCommand, ListObjectsV2Command, PutObjectCommand } from '@aws-sdk/client-s3';
 import { GalleryImage } from '../models/GalleryImage.js';
+import { Interaction } from '../models/Interaction.js';
 import { r2 } from '../config/r2.js';
 import { env } from '../config/env.js';
 
@@ -93,6 +94,11 @@ export const listR2Gallery = async (_req, res, next) => {
       .populate('shop', 'name')
       .lean();
     const galleryByKey = new Map(galleryRecords.map((record) => [record.imageKey, record]));
+    const likeCounts = await Interaction.aggregate([
+      { $match: { targetType: 'gallery', type: 'like', targetId: { $in: imageKeys } } },
+      { $group: { _id: '$targetId', count: { $sum: 1 } } }
+    ]);
+    const likesByKey = new Map(likeCounts.map(({ _id, count }) => [_id, count]));
 
     const items = objects
       .filter(({ Key }) => Key && Key !== 'gallery/' && !Key.endsWith('/'))
@@ -107,7 +113,8 @@ export const listR2Gallery = async (_req, res, next) => {
           publisherName: gallery?.shop?.name ?? null,
           publishedAt: gallery?.createdAt ?? null,
           title: gallery?.title ?? null,
-          description: gallery?.description ?? null
+          description: gallery?.description ?? null,
+          likesCount: likesByKey.get(Key) ?? 0
         };
       })
       .sort((a, b) => new Date(b.lastModified || 0) - new Date(a.lastModified || 0));

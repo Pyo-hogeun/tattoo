@@ -184,10 +184,15 @@ scrypt 해시로만 저장됩니다. 이 기능은 임시 테스트 용도이므
 - `DELETE /api/auth/user/me`: 본인 계정과 상호작용 데이터 삭제
 - `GET /api/interactions`: 본인의 좋아요·북마크 목록 조회
 - `POST /api/interactions`: `{ targetType: "gallery", targetId, type: "like" | "bookmark" }` 생성
+- `DELETE /api/interactions?targetId=...&type=like`: 대상 기준으로 본인의 좋아요 취소
 - `DELETE /api/interactions/:id`: 본인의 상호작용 삭제
 
 `/api/interactions`는 Customer JWT 전용 인증을 사용하므로 다른 사용자의 데이터는 조회하거나
 삭제할 수 없으며, 같은 대상과 유형을 반복 등록해도 중복 레코드를 만들지 않습니다.
+공개 `GET /api/gallery`의 각 게시물은 모든 일반 사용자의 좋아요 합계인 `likesCount`를 포함합니다.
+좋아요 등록과 대상 기준 취소 응답도 최신 `likesCount`를 반환하므로 프론트엔드는 하트 상태와
+숫자를 즉시 갱신할 수 있습니다. 로그인 사용자의 하트 활성 여부는 `GET /api/interactions?type=like`
+응답의 `targetId`와 갤러리 `key`를 비교해 판단합니다.
 
 백오피스의 **사용자 관리** 메뉴에는 매장·관리자와 일반 사용자 탭이 있습니다. `master`와
 `admin`은 일반 사용자 목록을 검색하고 상세 화면에서 닉네임·활성 상태를 수정하거나 계정과

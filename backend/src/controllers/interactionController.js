@@ -10,6 +10,8 @@ const publicInteraction = (item) => ({
   updatedAt: item.updatedAt
 });
 
+const countLikes = (targetId) => Interaction.countDocuments({ targetType: 'gallery', targetId, type: 'like' });
+
 export const listInteractions = async (req, res, next) => {
   try {
     const filter = { customer: req.customer._id };
@@ -34,7 +36,22 @@ export const createInteraction = async (req, res, next) => {
       { $setOnInsert: { customer: req.customer._id, targetType, targetId, type } },
       { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
     );
-    res.status(201).json({ interaction: publicInteraction(item) });
+    const likesCount = type === 'like' ? await countLikes(targetId) : undefined;
+    res.status(201).json({ interaction: publicInteraction(item), ...(likesCount !== undefined ? { likesCount } : {}) });
+  } catch (error) { next(error); }
+};
+
+export const deleteInteractionByTarget = async (req, res, next) => {
+  try {
+    const targetType = req.query.targetType || 'gallery';
+    const targetId = typeof req.query.targetId === 'string' ? req.query.targetId.trim() : '';
+    const type = req.query.type;
+    if (targetType !== 'gallery' || !targetId || !['like', 'bookmark'].includes(type)) {
+      return res.status(400).json({ message: 'targetType, targetId, type 값을 확인해 주세요.' });
+    }
+    await Interaction.findOneAndDelete({ customer: req.customer._id, targetType, targetId, type });
+    const likesCount = type === 'like' ? await countLikes(targetId) : undefined;
+    res.json({ active: false, ...(likesCount !== undefined ? { likesCount } : {}) });
   } catch (error) { next(error); }
 };
 

@@ -3,7 +3,7 @@ import test from 'node:test';
 import { Customer } from '../src/models/Customer.js';
 import { Interaction } from '../src/models/Interaction.js';
 import { authenticateCustomer } from '../src/middleware/customerAuth.js';
-import { createInteraction, deleteInteraction, listInteractions } from '../src/controllers/interactionController.js';
+import { createInteraction, deleteInteraction, deleteInteractionByTarget, listInteractions } from '../src/controllers/interactionController.js';
 import { signToken } from '../src/utils/token.js';
 import { customerMe, deleteCustomerAccount, deleteManagedCustomer, updateCustomer } from '../src/controllers/authController.js';
 
@@ -37,16 +37,18 @@ test('customer middleware rejects a backoffice token', async () => {
 });
 
 test('interaction CRUD is scoped to the authenticated customer', async (t) => {
-  const originals = { find: Interaction.find, findOneAndUpdate: Interaction.findOneAndUpdate, findOneAndDelete: Interaction.findOneAndDelete };
+  const originals = { find: Interaction.find, findOneAndUpdate: Interaction.findOneAndUpdate, findOneAndDelete: Interaction.findOneAndDelete, countDocuments: Interaction.countDocuments };
   t.after(() => Object.assign(Interaction, originals));
   const customer = { _id: 'customer-id' };
   const item = { id: 'interaction-id', customer: customer._id, targetType: 'gallery', targetId: 'gallery/key.webp', type: 'like', createdAt: new Date(), updatedAt: new Date() };
 
   Interaction.findOneAndUpdate = async (filter) => { assert.equal(filter.customer, customer._id); return item; };
+  Interaction.countDocuments = async (filter) => { assert.equal(filter.targetId, item.targetId); return 4; };
   let res = response();
   await createInteraction({ customer, body: { targetType: 'gallery', targetId: item.targetId, type: 'like' } }, res, assert.fail);
   assert.equal(res.statusCode, 201);
   assert.equal(res.body.interaction.id, item.id);
+  assert.equal(res.body.likesCount, 4);
 
   Interaction.find = (filter) => ({ sort: async () => { assert.equal(filter.customer, customer._id); return [item]; } });
   res = response();
@@ -57,6 +59,25 @@ test('interaction CRUD is scoped to the authenticated customer', async (t) => {
   res = response();
   await deleteInteraction({ customer, params: { id: item.id } }, res, assert.fail);
   assert.equal(res.statusCode, 204);
+});
+
+test('a customer can cancel a like by gallery target and receives the new total', async (t) => {
+  const originals = { findOneAndDelete: Interaction.findOneAndDelete, countDocuments: Interaction.countDocuments };
+  t.after(() => Object.assign(Interaction, originals));
+  const customer = { _id: 'customer-id' };
+  Interaction.findOneAndDelete = async (filter) => {
+    assert.deepEqual(filter, { customer: customer._id, targetType: 'gallery', targetId: 'gallery/key.webp', type: 'like' });
+    return { id: 'interaction-id' };
+  };
+  Interaction.countDocuments = async (filter) => {
+    assert.deepEqual(filter, { targetType: 'gallery', targetId: 'gallery/key.webp', type: 'like' });
+    return 3;
+  };
+  const res = response();
+
+  await deleteInteractionByTarget({ customer, query: { targetType: 'gallery', targetId: 'gallery/key.webp', type: 'like' } }, res, assert.fail);
+
+  assert.deepEqual(res.body, { active: false, likesCount: 3 });
 });
 
 test('customer me returns public profile and account deletion cascades interactions', async (t) => {
