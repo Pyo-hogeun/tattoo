@@ -45,7 +45,7 @@ node_modules/
 
 # Coverage
 coverage/
-*.lcov
+.pnp.*
 .nyc_output
 
 # Build output

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, onMounted } from 'vue';
 import BackofficeLnb from '~/components/BackofficeLnb.vue';
+import BackofficeGnb from '~/components/BackofficeGnb.vue';
 import { useBackofficeStore } from '~/stores/backoffice';
 import { SEOUL_CITY, seoulDistricts } from '~/data/seoulDistricts';
 
@@ -64,7 +65,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-7xl gap-6 p-6">
+  <div class="mx-auto flex max-w-7xl gap-6 p-6 pt-24">
+    <BackofficeGnb />
     <BackofficeLnb />
     <section class="flex-1 rounded-xl border bg-white p-4 shadow-sm">
       <div class="mb-3 flex items-center justify-between"><h2 class="text-lg font-semibold">수동 매장 등록/수정</h2><button v-if="isEditing" class="rounded border px-3 py-1 text-sm" @click="resetShopForm">수정 취소</button></div>

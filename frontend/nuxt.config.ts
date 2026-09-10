@@ -4,7 +4,11 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     public: {
-      apiBase: 'http://localhost:4000/api'
+      apiBase: 'http://localhost:4000/api',
+      kakaoClientId: '',
+      kakaoRedirectUri: 'http://localhost:3000/auth/kakao/callback',
+      kakaoUserRedirectUri: 'http://localhost:3001/auth/kakao/callback',
+      enableTestAuth: false
     }
   },
   devtools: { enabled: true }
