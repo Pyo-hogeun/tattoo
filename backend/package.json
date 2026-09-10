@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "test": "node --test",
     "import:kakao:shops": "node src/scripts/importKakaoPlaces.js",
     "audit:shops": "node src/scripts/auditShops.js"
   },

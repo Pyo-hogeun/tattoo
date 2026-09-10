@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import BackofficeLnb from '~/components/BackofficeLnb.vue';
+import BackofficeGnb from '~/components/BackofficeGnb.vue';
 import { useBackofficeStore } from '~/stores/backoffice';
 import { seoulDistricts } from '~/data/seoulDistricts';
 
@@ -33,7 +34,8 @@ watch(hideInvalidCases, (v) => { if (v) showInvalidOnly.value = false; });
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-7xl gap-6 p-6">
+  <div class="mx-auto flex max-w-7xl gap-6 p-6 pt-24">
+    <BackofficeGnb />
     <BackofficeLnb />
     <section class="flex-1 rounded-xl border bg-white p-4 shadow-sm h-[75vh] flex flex-col">
       <div class="sticky top-0 z-10 bg-white">

@@ -1,7 +1,8 @@
 import crypto from 'crypto';
 import path from 'path';
-import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, ListObjectsV2Command, PutObjectCommand } from '@aws-sdk/client-s3';
 import { GalleryImage } from '../models/GalleryImage.js';
+import { Interaction } from '../models/Interaction.js';
 import { r2 } from '../config/r2.js';
 import { env } from '../config/env.js';
 
@@ -13,6 +14,17 @@ const allowedImageTypes = new Map([
 ]);
 
 const httpError = (statusCode, message) => Object.assign(new Error(message), { statusCode });
+
+const assertR2ListConfig = () => {
+  if (![env.r2Endpoint, env.r2AccessKey, env.r2SecretKey, env.r2Bucket, env.r2PublicUrl].every(Boolean)) {
+    throw httpError(503, '갤러리 조회에 필요한 Cloudflare R2 환경 변수가 설정되지 않았습니다.');
+  }
+};
+
+const publicUrlForKey = (key) => {
+  const encodedKey = key.split('/').map(encodeURIComponent).join('/');
+  return `${env.r2PublicUrl}/${encodedKey}`;
+};
 
 const normalizePayload = (body = {}) => {
   const payload = {};
@@ -49,6 +61,64 @@ const removeGalleryFile = async (imageKey) => {
 export const listMyGallery = async (req, res, next) => {
   try {
     const items = await GalleryImage.find({ owner: req.user._id }).sort({ updatedAt: -1 });
+    res.json({ items, total: items.length });
+  } catch (error) { next(error); }
+};
+
+export const listR2Gallery = async (_req, res, next) => {
+  try {
+    assertR2ListConfig();
+
+    const objects = [];
+    let continuationToken;
+
+    do {
+      const page = await r2.send(new ListObjectsV2Command({
+        Bucket: env.r2Bucket,
+        Prefix: 'gallery/',
+        ContinuationToken: continuationToken
+      }));
+
+      objects.push(...(page.Contents || []));
+      continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+      if (page.IsTruncated && !continuationToken) {
+        throw new Error('Cloudflare R2 갤러리 목록의 다음 페이지 토큰이 없습니다.');
+      }
+    } while (continuationToken);
+
+    const imageKeys = objects
+      .map(({ Key }) => Key)
+      .filter((key) => key && key !== 'gallery/' && !key.endsWith('/'));
+    const galleryRecords = await GalleryImage.find({ imageKey: { $in: imageKeys }, isActive: true })
+      .select('imageKey title description shop createdAt')
+      .populate('shop', 'name')
+      .lean();
+    const galleryByKey = new Map(galleryRecords.map((record) => [record.imageKey, record]));
+    const likeCounts = await Interaction.aggregate([
+      { $match: { targetType: 'gallery', type: 'like', targetId: { $in: imageKeys } } },
+      { $group: { _id: '$targetId', count: { $sum: 1 } } }
+    ]);
+    const likesByKey = new Map(likeCounts.map(({ _id, count }) => [_id, count]));
+
+    const items = objects
+      .filter(({ Key }) => Key && Key !== 'gallery/' && !Key.endsWith('/'))
+      .map(({ Key, Size, LastModified, ETag }) => {
+        const gallery = galleryByKey.get(Key);
+        return {
+          key: Key,
+          url: publicUrlForKey(Key),
+          size: Size ?? 0,
+          lastModified: LastModified,
+          etag: ETag?.replaceAll('"', ''),
+          publisherName: gallery?.shop?.name ?? null,
+          publishedAt: gallery?.createdAt ?? null,
+          title: gallery?.title ?? null,
+          description: gallery?.description ?? null,
+          likesCount: likesByKey.get(Key) ?? 0
+        };
+      })
+      .sort((a, b) => new Date(b.lastModified || 0) - new Date(a.lastModified || 0));
+
     res.json({ items, total: items.length });
   } catch (error) { next(error); }
 };

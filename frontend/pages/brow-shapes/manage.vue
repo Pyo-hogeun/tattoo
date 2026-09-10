@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import BackofficeLnb from '~/components/BackofficeLnb.vue';
+import BackofficeGnb from '~/components/BackofficeGnb.vue';
 import { useBackofficeStore } from '~/stores/backoffice';
 
 const store = useBackofficeStore();
@@ -55,7 +56,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-7xl gap-6 p-6">
+  <div class="mx-auto flex max-w-7xl gap-6 p-6 pt-24">
+    <BackofficeGnb />
     <BackofficeLnb />
     <section class="flex-1 rounded-xl border bg-white p-4 shadow-sm">
       <h2 class="mb-3 text-lg font-semibold">눈썹형태 등록/관리</h2>

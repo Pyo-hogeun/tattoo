@@ -9,24 +9,27 @@ onMounted(async () => {
     const state = query.get('state');
     const flow = sessionStorage.getItem('kakao_oauth_flow');
     const saved = sessionStorage.getItem('signup_shop');
-    if (!code || !state || !['login', 'signup'].includes(flow || '') || state !== sessionStorage.getItem('kakao_oauth_state')) throw new Error('인증 요청이 만료되었거나 올바르지 않습니다.');
+    if (!code || !state || !['login', 'signup', 'user-signup'].includes(flow || '') || state !== sessionStorage.getItem('kakao_oauth_state')) throw new Error('인증 요청이 만료되었거나 올바르지 않습니다.');
     if (flow === 'signup' && !saved) throw new Error('회원가입 정보가 만료되었습니다. 다시 입력해 주세요.');
-    const data: any = await $fetch(`${config.public.apiBase}/auth/kakao/${flow}`, {
+    const endpoint = flow === 'user-signup' ? '/auth/kakao/user/signup' : `/auth/kakao/${flow}`;
+    const data: any = await $fetch(`${config.public.apiBase}${endpoint}`, {
       method: 'POST',
       body: {
         ...(saved ? JSON.parse(saved) : {}),
         code,
-        redirectUri: config.public.kakaoRedirectUri,
+        redirectUri: flow === 'user-signup' ? config.public.kakaoUserRedirectUri : config.public.kakaoRedirectUri,
         clientId: config.public.kakaoClientId
       }
     });
-    localStorage.setItem('auth_token', data.token);
-    localStorage.setItem('auth_user', JSON.stringify(data.user));
+    const storagePrefix = flow === 'user-signup' ? 'customer_auth' : 'auth';
+    localStorage.setItem(`${storagePrefix}_token`, data.token);
+    localStorage.setItem(`${storagePrefix}_user`, JSON.stringify(data.user));
     sessionStorage.removeItem('signup_shop');
     sessionStorage.removeItem('kakao_oauth_state');
     sessionStorage.removeItem('kakao_oauth_flow');
-    status.value = flow === 'signup' ? '가입이 완료되었습니다.' : '로그인되었습니다.';
-    await navigateTo(data.user.role === 'manager' ? '/gallery/manage' : '/shops/list');
+    status.value = flow === 'user-signup' || flow === 'signup' ? '가입이 완료되었습니다.' : '로그인되었습니다.';
+    if (flow === 'user-signup') await navigateTo('/user/welcome');
+    else await navigateTo(data.user.role === 'manager' ? '/gallery/manage' : '/shops/list');
   } catch (error: any) { status.value = error?.data?.message || error.message || '회원가입에 실패했습니다.'; }
 });
 </script>

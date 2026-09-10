@@ -62,7 +62,9 @@ export const openapiDocument = {
   tags: [
     { name: 'System', description: '서버 상태 확인' },
     { name: 'Shops', description: '매장 관리' },
-    { name: 'Brow shapes', description: '눈썹 형태 관리' }
+    { name: 'Brow shapes', description: '눈썹 형태 관리' },
+    { name: 'Gallery', description: 'R2 갤러리 이미지 조회' },
+    { name: 'Auth', description: '회원가입, 로그인 및 권한 관리' }
   ],
   paths: {
     '/health': {
@@ -114,6 +116,83 @@ export const openapiDocument = {
         responses: { 200: { description: '수정된 눈썹 형태', content: { 'application/json': { schema: { $ref: '#/components/schemas/BrowShape' } } } }, 404: errorResponse('눈썹 형태를 찾을 수 없음'), 500: errorResponse('서버 오류') }
       },
       delete: { tags: ['Brow shapes'], summary: '눈썹 형태 삭제', parameters: [idParameter], responses: { 204: { description: '삭제 완료' }, 404: errorResponse('눈썹 형태를 찾을 수 없음'), 500: errorResponse('서버 오류') } }
+    },
+    '/api/gallery': {
+      get: {
+        tags: ['Gallery'], summary: 'R2 갤러리 이미지 전체 조회',
+        description: 'Cloudflare R2 버킷의 gallery/ 접두사 아래에 있는 모든 파일을 최신 수정 순으로 반환하며, DB에 등록된 파일은 매장명과 게시 정보를 포함합니다.',
+        responses: {
+          200: { description: '갤러리 이미지 목록', content: { 'application/json': { schema: { $ref: '#/components/schemas/R2GalleryList' } } } },
+          503: errorResponse('R2 환경 변수 미설정'),
+          500: errorResponse('서버 오류')
+        }
+      }
+    },
+    '/api/auth/test/signup': {
+      post: {
+        tags: ['Auth'], summary: '테스트 전용 ID/PW 회원가입',
+        description: 'ENABLE_TEST_AUTH=true인 로컬/테스트 환경에서만 사용할 수 있습니다.',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/TestSignUpInput' } } } },
+        responses: { 201: { description: '가입 및 로그인 완료' }, 400: errorResponse('입력값 오류'), 404: errorResponse('테스트 인증 비활성화'), 409: errorResponse('중복 ID 또는 매장') }
+      }
+    },
+    '/api/auth/kakao/user/signup': {
+      post: {
+        tags: ['Auth'], summary: '일반 사용자 카카오 회원가입',
+        description: '매장 파트너 회원가입과 분리된 일반 사용자 계정을 생성합니다. 매장 정보는 필요하지 않습니다.',
+        responses: { 201: { description: '일반 사용자 가입 완료' }, 400: errorResponse('카카오 인증 오류'), 409: errorResponse('이미 가입한 일반 사용자') }
+      }
+    },
+    '/api/auth/kakao/user/login': {
+      post: { tags: ['Auth'], summary: '일반 사용자 카카오 로그인', responses: { 200: { description: '로그인 완료' }, 400: errorResponse('카카오 인증 오류'), 404: errorResponse('가입되지 않은 사용자') } }
+    },
+    '/api/auth/user/me': {
+      get: { tags: ['Auth'], summary: '일반 사용자 세션 조회', responses: { 200: { description: '현재 일반 사용자' }, 401: errorResponse('인증 필요') } },
+      delete: { tags: ['Auth'], summary: '일반 사용자 계정 삭제', responses: { 204: { description: '계정 및 상호작용 삭제 완료' }, 401: errorResponse('인증 필요') } }
+    },
+    '/api/interactions': {
+      get: { tags: ['Gallery'], summary: '내 상호작용 목록', parameters: [{ name: 'type', in: 'query', schema: { type: 'string', enum: ['like', 'bookmark'] } }, { name: 'targetId', in: 'query', schema: { type: 'string' } }], responses: { 200: { description: '상호작용 목록' }, 401: errorResponse('일반 사용자 인증 필요') } },
+      post: { tags: ['Gallery'], summary: '상호작용 생성', description: '좋아요 생성 응답에는 전체 likesCount가 포함됩니다.', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/InteractionInput' } } } }, responses: { 201: { description: '상호작용 생성 또는 기존 항목 반환' }, 400: errorResponse('입력값 오류'), 401: errorResponse('일반 사용자 인증 필요') } },
+      delete: { tags: ['Gallery'], summary: '대상 기준 상호작용 취소', description: 'targetType, targetId, type으로 본인의 상호작용을 취소합니다. 좋아요 취소 응답에는 전체 likesCount가 포함됩니다.', parameters: [{ name: 'targetType', in: 'query', schema: { type: 'string', enum: ['gallery'], default: 'gallery' } }, { name: 'targetId', in: 'query', required: true, schema: { type: 'string' } }, { name: 'type', in: 'query', required: true, schema: { type: 'string', enum: ['like', 'bookmark'] } }], responses: { 200: { description: '취소 완료' }, 400: errorResponse('입력값 오류'), 401: errorResponse('일반 사용자 인증 필요') } }
+    },
+    '/api/interactions/{id}': {
+      delete: { tags: ['Gallery'], summary: '내 상호작용 삭제', parameters: [idParameter], responses: { 204: { description: '삭제 완료' }, 401: errorResponse('일반 사용자 인증 필요'), 404: errorResponse('상호작용을 찾을 수 없음') } }
+    },
+    '/api/auth/test/login': {
+      post: {
+        tags: ['Auth'], summary: '테스트 전용 ID/PW 로그인',
+        description: 'ENABLE_TEST_AUTH=true인 로컬/테스트 환경에서만 사용할 수 있습니다.',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/TestLoginInput' } } } },
+        responses: { 200: { description: '로그인 완료' }, 401: errorResponse('잘못된 ID 또는 비밀번호'), 404: errorResponse('테스트 인증 비활성화') }
+      }
+    },
+    '/api/auth/users': {
+      get: {
+        tags: ['Auth'], summary: '사용자 목록 조회', description: 'master 또는 admin 권한이 필요합니다.',
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } },
+          { name: 'search', in: 'query', description: '닉네임 또는 로그인 ID 검색', schema: { type: 'string' } },
+          { name: 'role', in: 'query', schema: { type: 'string', enum: ['master', 'admin', 'manager'] } }
+        ],
+        responses: { 200: { description: '사용자 목록', content: { 'application/json': { schema: { $ref: '#/components/schemas/UserList' } } } }, 401: errorResponse('인증 필요'), 403: errorResponse('권한 없음') }
+      }
+    },
+    '/api/auth/customers': {
+      get: { tags: ['Auth'], summary: '일반 사용자 관리 목록', description: 'master 또는 admin 권한이 필요합니다.', parameters: [{ name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } }, { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } }, { name: 'search', in: 'query', description: '닉네임 검색', schema: { type: 'string' } }], responses: { 200: { description: '일반 사용자 목록' }, 401: errorResponse('인증 필요'), 403: errorResponse('권한 없음') } }
+    },
+    '/api/auth/customers/{id}': {
+      get: { tags: ['Auth'], summary: '일반 사용자 관리 상세', parameters: [idParameter], responses: { 200: { description: '일반 사용자 상세' }, 404: errorResponse('일반 사용자를 찾을 수 없음') } },
+      patch: { tags: ['Auth'], summary: '일반 사용자 정보 수정', description: '닉네임과 활성 상태를 수정합니다.', parameters: [idParameter], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { nickname: { type: 'string' }, isActive: { type: 'boolean' } } } } } }, responses: { 200: { description: '수정된 일반 사용자' }, 400: errorResponse('입력값 오류'), 404: errorResponse('일반 사용자를 찾을 수 없음') } },
+      delete: { tags: ['Auth'], summary: '일반 사용자 계정 삭제', description: '계정과 해당 상호작용을 함께 삭제합니다.', parameters: [idParameter], responses: { 204: { description: '삭제 완료' }, 404: errorResponse('일반 사용자를 찾을 수 없음') } }
+    },
+    '/api/auth/users/{id}': {
+      get: { tags: ['Auth'], summary: '사용자 상세 조회', description: 'master 또는 admin 권한이 필요합니다.', parameters: [idParameter], responses: { 200: { description: '사용자 상세' }, 404: errorResponse('사용자를 찾을 수 없음') } },
+      patch: { tags: ['Auth'], summary: '사용자 정보 수정', description: '닉네임, 권한, 활성 상태를 수정합니다. admin은 master 계정을 수정하거나 master 권한을 부여할 수 없습니다.', parameters: [idParameter], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UserUpdateInput' } } } }, responses: { 200: { description: '수정된 사용자' }, 400: errorResponse('입력값 오류'), 403: errorResponse('권한 없음'), 404: errorResponse('사용자를 찾을 수 없음') } },
+      delete: { tags: ['Auth'], summary: '사용자 계정 삭제', description: 'master/admin이 사용자를 삭제합니다. admin은 master를 삭제할 수 없고 마지막 활성 master는 삭제할 수 없습니다.', parameters: [idParameter], responses: { 204: { description: '삭제 완료' }, 400: errorResponse('마지막 master 삭제 불가'), 403: errorResponse('권한 없음'), 404: errorResponse('사용자를 찾을 수 없음') } }
+    },
+    '/api/auth/me': {
+      delete: { tags: ['Auth'], summary: '내 계정 삭제', description: '로그인한 본인의 백오피스 계정을 삭제합니다. 마지막 활성 master는 삭제할 수 없습니다.', responses: { 204: { description: '삭제 완료' }, 400: errorResponse('마지막 master 삭제 불가'), 401: errorResponse('인증 필요') } }
     }
   },
   components: {
@@ -126,7 +205,15 @@ export const openapiDocument = {
       BrowShape: { type: 'object', required: ['_id', 'name', 'imageUrl'], properties: browShapeProperties },
       BrowShapeInput: { type: 'object', required: ['name', 'imageUrl'], properties: browShapeProperties },
       BrowShapeMultipartInput: { type: 'object', required: ['name'], properties: { name: browShapeProperties.name, imageUrl: browShapeProperties.imageUrl, description: browShapeProperties.description, isActive: { type: 'boolean', default: true }, image: { type: 'string', format: 'binary', description: 'JPEG, PNG, WebP 또는 GIF (최대 10MB)' } } },
-      BrowShapeList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/BrowShape' } }, total: { type: 'integer' } } }
+      BrowShapeList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/BrowShape' } }, total: { type: 'integer' } } },
+      R2GalleryImage: { type: 'object', required: ['key', 'url', 'size', 'publisherName', 'publishedAt', 'title', 'description', 'likesCount'], properties: { key: { type: 'string', example: 'gallery/example.webp' }, url: { type: 'string', format: 'uri' }, size: { type: 'integer', minimum: 0, description: '파일 크기(byte)' }, lastModified: { type: 'string', format: 'date-time' }, etag: { type: 'string' }, publisherName: { type: 'string', nullable: true, description: '게시 매장명' }, publishedAt: { type: 'string', format: 'date-time', nullable: true, description: '게시일' }, title: { type: 'string', nullable: true, description: '작품 제목' }, description: { type: 'string', nullable: true, description: '작품 설명' }, likesCount: { type: 'integer', minimum: 0, description: '전체 일반 사용자의 좋아요 합계' } } },
+      R2GalleryList: { type: 'object', required: ['items', 'total'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/R2GalleryImage' } }, total: { type: 'integer' } } },
+      TestLoginInput: { type: 'object', required: ['loginId', 'password'], properties: { loginId: { type: 'string', minLength: 4, maxLength: 40 }, password: { type: 'string', minLength: 8 } } },
+      TestSignUpInput: { type: 'object', required: ['loginId', 'password'], description: 'manager 역할은 shopName, address, phone도 필수이며 admin/master 역할에는 매장 정보가 필요하지 않습니다.', properties: { loginId: { type: 'string', pattern: '^[a-z0-9._-]{4,40}$' }, password: { type: 'string', minLength: 8 }, nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'], default: 'manager' }, shopName: { type: 'string' }, address: { type: 'string' }, phone: { type: 'string' } } },
+      ManagedUser: { type: 'object', required: ['id', 'role', 'isActive', 'createdAt', 'updatedAt'], properties: { id: { type: 'string' }, nickname: { type: 'string' }, loginId: { type: 'string', nullable: true }, kakaoId: { type: 'string', nullable: true }, role: { type: 'string', enum: ['master', 'admin', 'manager'] }, shop: { $ref: '#/components/schemas/Shop' }, isActive: { type: 'boolean' }, createdAt: { type: 'string', format: 'date-time' }, updatedAt: { type: 'string', format: 'date-time' } } },
+      UserList: { type: 'object', required: ['items', 'total', 'page', 'limit', 'totalPages'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/ManagedUser' } }, total: { type: 'integer' }, page: { type: 'integer' }, limit: { type: 'integer' }, totalPages: { type: 'integer' } } },
+      UserUpdateInput: { type: 'object', properties: { nickname: { type: 'string' }, role: { type: 'string', enum: ['master', 'admin', 'manager'] }, isActive: { type: 'boolean' } } },
+      InteractionInput: { type: 'object', required: ['targetId', 'type'], properties: { targetType: { type: 'string', enum: ['gallery'], default: 'gallery' }, targetId: { type: 'string', example: 'gallery/example.webp' }, type: { type: 'string', enum: ['like', 'bookmark'] } } }
     }
   }
 };
