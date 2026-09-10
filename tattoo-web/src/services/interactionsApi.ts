@@ -13,12 +13,17 @@ interface ApiErrorBody {
 }
 
 export class InteractionApiError extends Error {
+  public readonly code: InteractionErrorCode
+  public readonly status?: number
+
   constructor(
-    public readonly code: InteractionErrorCode,
+    code: InteractionErrorCode,
     message: string,
-    public readonly status?: number,
+    status?: number,
   ) {
     super(message)
+    this.code = code
+    this.status = status
     this.name = 'InteractionApiError'
   }
 }

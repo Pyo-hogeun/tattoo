@@ -31,7 +31,7 @@ export function createKakaoCustomerAuthUrl(clientId: string, redirectUri: string
   return `https://kauth.kakao.com/oauth/authorize?${query.toString()}`
 }
 
-export function validateKakaoCustomerCallback(search: string) {
+export function validateKakaoCustomerCallback(search: string): { code: string; flow: KakaoCustomerFlow } | null {
   const query = new URLSearchParams(search)
   const code = query.get('code')
   const state = query.get('state')

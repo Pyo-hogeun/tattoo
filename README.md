@@ -26,7 +26,7 @@
     └── package.json
 ```
 
-> `tattoo-web`의 소스는 별도 저장소의 Git 이력을 보존하는 방식으로 아래 절차에 따라 가져옵니다. 소스를 가져오기 전에도 백엔드와 관리자 프론트엔드는 루트 명령으로 실행할 수 있습니다.
+> `tattoo-web`은 별도 저장소의 `main` 커밋 `cc78966`을 Git 이력과 함께 통합했습니다.
 
 ## 설치 및 통합 실행
 
@@ -45,23 +45,15 @@ npm run dev
 ```bash
 npm run dev:api
 npm run dev:admin
-npm run dev:web       # tattoo-web을 가져온 뒤 사용
+npm run dev:web
 npm run build         # 빌드 스크립트가 있는 모든 workspace 빌드
 ```
 
-## 기존 tattoo-web 저장소 합치기
+## tattoo-web 통합 이력
 
-일반 사용자 프론트엔드의 기존 커밋 이력을 유지하려면 이 저장소의 루트에서 다음을 실행합니다. `<TATTOO_WEB_GIT_URL>`은 실제 저장소 URL로 바꿉니다.
-
-```bash
-git remote add tattoo-web <TATTOO_WEB_GIT_URL>
-git fetch tattoo-web
-git subtree add --prefix=tattoo-web tattoo-web main
-git remote remove tattoo-web
-npm install
-```
-
-기본 브랜치가 `master`라면 `main` 대신 `master`를 사용합니다. 가져온 프로젝트의 `package.json`에 고유한 `name`과 `dev`, `build` 스크립트가 있는지 확인하고, 이름을 `tattoo-web`으로 설정하면 루트의 `npm run dev:web` 명령도 바로 사용할 수 있습니다. 이후 사용자 프론트엔드만 다시 동기화해야 할 경우 `git subtree pull --prefix=tattoo-web tattoo-web main`을 사용할 수 있지만, 통합 완료 후에는 이 모노레포를 단일 원본으로 운영하는 것을 권장합니다.
+원본: https://github.com/Pyo-hogeun/tattoo-web.git (`main`, `cc78966`).
+원본의 중첩 폴더를 루트 `tattoo-web/`으로 정리했습니다. 이후 개발은 이 모노레포에서 진행합니다.
+사용자 화면은 Vue/Vite 기반이며 개발 포트는 `3001`입니다. 필요하면 `tattoo-web/.env.example`을 `tattoo-web/.env`로 복사하여 설정하세요.
 
 ## Backend 개별 실행
 ```bash

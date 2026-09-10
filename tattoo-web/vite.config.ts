@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [vue(), tailwindcss()],
-    server: { proxy: apiProxy },
+    server: { port: 3001, proxy: apiProxy },
     preview: { proxy: apiProxy },
   }
 })

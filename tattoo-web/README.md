@@ -67,7 +67,7 @@ Required web configuration:
 
 ```env
 VITE_KAKAO_CLIENT_ID=your_kakao_rest_api_key
-VITE_KAKAO_USER_REDIRECT_URI=http://localhost:5173/auth/kakao/callback
+VITE_KAKAO_USER_REDIRECT_URI=http://localhost:3001/auth/kakao/callback
 ```
 
 The redirect URI must exactly match the backend `KAKAO_REDIRECT_URI` and Kakao developer-console registration. The backend must also allow the web origin through `FRONTEND_ORIGIN_USER`. Authenticated customer uploads use `POST /api/gallery` with the customer bearer token and multipart fields `image`, `title`, and `description`.
