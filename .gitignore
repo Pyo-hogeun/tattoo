@@ -35,7 +35,8 @@ out/
 # Dependencies
 node_modules/
 
-# Logs
+.output
+.pnp.*
 *.log
 
 # Runtime data
