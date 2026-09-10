@@ -49,6 +49,14 @@ npm run dev:web
 npm run build         # 빌드 스크립트가 있는 모든 workspace 빌드
 ```
 
+## 의존성 설치 문제 해결
+
+루트 `package-lock.json`에는 macOS, Linux, Windows의 optional 네이티브 의존성이 포함되어 있습니다. 체크아웃 후 저장소 루트에서 `npm ci --include=optional`로 설치하세요. 각 하위 프로젝트에서 별도로 설치하지 않습니다. 하위 lockfile은 제거하여 루트 lockfile만 관리합니다.
+
+관리자 화면은 Tailwind CSS 3을 명시적으로 사용하고, 사용자 화면은 Tailwind CSS 4를 사용합니다.
+
+Nuxt의 `Cannot find native binding` 오류가 발생하면 최신 lockfile을 받은 뒤 루트에서 `npm ci --include=optional`을 실행하세요. 특정 OS의 binding을 일반 dependencies에 추가하지 마세요.
+
 ## tattoo-web 통합 이력
 
 원본: https://github.com/Pyo-hogeun/tattoo-web.git (`main`, `cc78966`).
